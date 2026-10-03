@@ -8,6 +8,8 @@ const DATA_PATH = '.gym/data.json';
 const LEGACY_PATH = '.gym/exercises.json';
 const ACTIVE_SESSION_PATH = '.gym/active-session.json';
 const HISTORY_LIMIT = 20;
+// Where default exercise photos were loaded from before they moved into this repo
+const LEGACY_IMAGE_BASE = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/';
 
 // Shape of .gym/exercises.json before the v2 redesign
 interface LegacyExercise extends Exercise {
@@ -39,8 +41,8 @@ export class GymStore {
   private loadFailed = false;
   /** Local copies of exercise images in .gym/media/ */
   readonly media: MediaCache;
-  /** Exercises added automatically by load(), so the plugin can fetch their images. */
-  seededExercises: Exercise[] = [];
+  /** Exercises whose images load() added or changed, so the plugin can fetch them for offline use. */
+  exercisesNeedingImages: Exercise[] = [];
 
   constructor(app: App) {
     this.app = app;
@@ -68,11 +70,12 @@ export class GymStore {
       // whether it's new or predates them
       let changed = false;
       if (!this.data.defaultsAdded) {
-        this.seededExercises = this.addDefaultExercises();
+        this.exercisesNeedingImages = this.addDefaultExercises();
         this.data.defaultsAdded = true;
         changed = true;
       }
       if (this.syncDefaultHowTo()) changed = true;
+      if (await this.moveLegacyImages()) changed = true;
       if (changed) await this.save();
     } catch (e) {
       this.loadFailed = true;
@@ -140,6 +143,30 @@ export class GymStore {
       }
     }
     return changed;
+  }
+
+  /**
+   * Default exercise photos used to load from free-exercise-db and now load from
+   * this plugin's repo. Point stored default exercises whose images are all the
+   * old built-in ones at the new URLs (images the user set are kept), and delete
+   * the old offline copies. Returns true if anything changed.
+   */
+  private async moveLegacyImages(): Promise<boolean> {
+    const builtIn = new Map(DEFAULT_EXERCISES.map(e => [e.id, e]));
+    const oldUrls: string[] = [];
+    for (const ex of this.data.exercises) {
+      const def = builtIn.get(ex.id);
+      const media = ex.media ?? [];
+      if (!def?.media || media.length === 0 || !media.every(m => m.src.startsWith(LEGACY_IMAGE_BASE))) continue;
+      oldUrls.push(...media.map(m => m.src));
+      ex.media = def.media.map(m => ({ ...m }));
+      if (!this.exercisesNeedingImages.includes(ex)) this.exercisesNeedingImages.push(ex);
+    }
+    for (const url of oldUrls) {
+      const path = this.media.pathFor(url);
+      if (path && await this.app.vault.adapter.exists(path)) await this.app.vault.adapter.remove(path);
+    }
+    return oldUrls.length > 0;
   }
 
   /** Adds the missing default exercises and returns the ones added. */

@@ -56,7 +56,7 @@ export default class GymPlugin extends Plugin {
 
     // Reopen an unfinished workout, e.g. after Obsidian was closed mid-session
     this.app.workspace.onLayoutReady(() => {
-      if (this.store.seededExercises.length > 0) void this.downloadExerciseImages(this.store.seededExercises);
+      if (this.store.exercisesNeedingImages.length > 0) void this.downloadExerciseImages(this.store.exercisesNeedingImages);
       void this.store.loadActiveSession().then(session => {
         if (session && this.app.workspace.getLeavesOfType(VIEW_TYPE_SESSION).length === 0) {
           void this.openSessionView();

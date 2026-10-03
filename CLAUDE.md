@@ -15,7 +15,7 @@ An Obsidian plugin for logging gym workouts, modelled on the iPhone app RepCount
 - **Programme Sets/Reps track the last values performed**: when an exercise is added to a programme they come from its latest history (set count, reps of the first set; 3 × 8 if none), and `finishSession` updates them from the sets just done. They can still be edited by hand.
 - **Active session** is saved to `.gym/active-session.json` on every change and reopened on startup, so closing Obsidian mid-workout loses nothing. Only one session can be active.
 - **Finish** (`finishSession`): writes the note (ticked-off sets only), prepends an `ExerciseLog` to each exercise's history (capped at 20), updates the programme's Sets/Reps, saves, and clears the active session.
-- **Default exercises** (`defaultExercises.ts`, 39 exercises, 5–6 per muscle group, ids `default-*`): added automatically once per vault by `GymStore.load()` (new and existing vaults; skips matching ids or names; the `defaultsAdded` flag in data.json stops deleted ones coming back). The "Add default exercises" command or library button re-adds missing ones (`GymStore.addDefaultExercises`). Start/end photos come from free-exercise-db (public domain; URLs point at its GitHub raw files). Names, cues and how-tos are our own: a one-sentence `setup` (shown as "Setup:") followed by 2–3 short numbered movement `instructions`. Setup and instructions can't be edited in the app, so `syncDefaultHowTo()` in `load()` updates stored copies whenever the built-in text changes; other fields of default exercises may have been edited by the user and are never overwritten.
+- **Default exercises** (`defaultExercises.ts`, 39 exercises, 5–6 per muscle group, ids `default-*`): added automatically once per vault by `GymStore.load()` (new and existing vaults; skips matching ids or names; the `defaultsAdded` flag in data.json stops deleted ones coming back). The "Add default exercises" command or library button re-adds missing ones (`GymStore.addDefaultExercises`). **Source of truth is `assets/exercises/<slug>/README.md`** (front matter `id`, `name`, `muscleGroup`, `equipment`; sections `## Cues`, `## Setup`, `## Steps` as a numbered list) plus the images in that folder. `scripts/build-exercises.mjs` generates `src/defaultExercises.ts` (`npm run exercises`; never hand-edit it; `npm run build` runs it with `--check`). Photos are from free-exercise-db (public domain) and served from this repo's raw GitHub URLs, so new or changed photos only load for users once pushed to `main`. Stored defaults still pointing at the old free-exercise-db URLs are switched by `moveLegacyImages()` in `load()`. Names, cues and how-tos are our own: a one-sentence `setup` (shown as "Setup:") followed by 2–3 short numbered movement `instructions`. Setup and instructions can't be edited in the app, so `syncDefaultHowTo()` in `load()` updates stored copies whenever the built-in text changes; other fields of default exercises may have been edited by the user and are never overwritten.
 - **Exercise info popup** (`ExerciseInfoModal`, ⓘ button in the workout tab, library and programme editor): media, cues, then "How to do it": **Setup:** line and numbered steps. `Exercise.media` is a tagged union (`{ type: 'image', src }`, `src` = URL, vault path or `[[link]]`); `renderExerciseMedia` cycles through several images like a GIF. Web images are cached in `.gym/media/<host>/<path>` by `MediaCache` (`store.media`): downloaded when defaults are added (first run included, via `store.seededExercises`), by the "Download exercise images for offline use" command, and in the background the first time an uncached image is shown; `resolveMediaSrc` prefers the local copy. A 3D model renderer is planned: add a `{ type: 'model' }` variant and handle it in `renderExerciseMedia`.
 - **Rest timer**: ticking a set done starts a countdown in a sticky bar (settings `restTimerEnabled`, `restSeconds`).
 
@@ -53,7 +53,7 @@ src/
   session.ts         # createSession / buildSessionExercise (prefill rule), finishSession, programme-values helpers
   sessionNote.ts     # Session → markdown, note file naming
   sessionView.ts     # SessionView, the "Workouts" tab: home when idle (three buttons: Start session → programme list, Start empty session, Design programme; `homeMode`); set logging, history, notes, rest timer, finish/discard during a workout
-  defaultExercises.ts # DEFAULT_EXERCISES: the 39 default exercises (photos from free-exercise-db)
+  defaultExercises.ts # GENERATED from assets/exercises by scripts/build-exercises.mjs
   exerciseMedia.ts   # resolve and render exercise media (images now, 3D later)
   mediaCache.ts      # MediaCache: offline copies of web images in .gym/media/
   exerciseInfoModal.ts # ExerciseInfoModal: how to do an exercise
@@ -63,6 +63,8 @@ src/
   exerciseModal.ts   # ExerciseEditorModal
   settings.ts        # GymPluginSettings, DEFAULT_SETTINGS, GymSettingsTab
 styles.css           # gym-* classes
+assets/exercises/    # one folder per default exercise: README.md + photos (source for defaultExercises.ts)
+scripts/build-exercises.mjs # generates src/defaultExercises.ts
 ```
 
 ### Patterns
@@ -95,6 +97,7 @@ npm install
 npm run dev      # esbuild watch mode
 npm run build    # tsc type-check + production build
 npm run lint     # eslint with eslint-plugin-obsidianmd
+npm run exercises # regenerate src/defaultExercises.ts from assets/exercises/*/README.md
 ```
 
 If `node`/`npm` aren't on PATH in your shell, Bun is installed at `/opt/homebrew/bin/bun` and runs the same tools: `bun node_modules/typescript/bin/tsc -noEmit -skipLibCheck`, `bun node_modules/eslint/bin/eslint.js .`, `bun esbuild.config.mjs production`.

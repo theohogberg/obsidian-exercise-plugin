@@ -54,7 +54,7 @@ Exercises, programmes and per-exercise history are stored in `<vault>/.gym/data.
 
 ## Network use
 
-The default exercises' photos come from GitHub (`raw.githubusercontent.com`, from the public-domain [free-exercise-db](https://github.com/yuhonas/free-exercise-db)). They are downloaded into `<vault>/.gym/media/` (about 5 MB) when the default exercises are added, so they work offline afterwards. Web images you add to your own exercises are saved there too the first time they're shown, or all at once with **Download exercise images for offline use**. Nothing else is sent or fetched.
+The default exercises' photos are hosted in this repository (`assets/exercises/`) and loaded from GitHub (`raw.githubusercontent.com`). They are downloaded into `<vault>/.gym/media/` (about 5 MB) when the default exercises are added, so they work offline afterwards. Web images you add to your own exercises are saved there too the first time they're shown, or all at once with **Download exercise images for offline use**. Nothing else is sent or fetched.
 
 ## Development
 
@@ -63,6 +63,11 @@ npm install
 npm run dev     # watch mode
 npm run build   # type-check + production build
 npm run lint
+npm run exercises   # regenerate src/defaultExercises.ts from assets/exercises
 ```
+
+### Default exercises
+
+Each default exercise is a folder in [`assets/exercises/`](assets/exercises/) with a `README.md` (front matter, then Cues, Setup and numbered Steps) and its photos. To change one, or add a new one, edit or add a folder and run `npm run exercises`; don't edit `src/defaultExercises.ts` by hand. `npm run build` fails if the generated file is out of date. Photos are from the public-domain [free-exercise-db](https://github.com/yuhonas/free-exercise-db); names, cues and instructions are our own.
 
 Copy (or symlink the repo) `main.js`, `manifest.json` and `styles.css` into `<vault>/.obsidian/plugins/gym-plugin/`, then reload Obsidian. See `HOW-TO-RUN.md`.
