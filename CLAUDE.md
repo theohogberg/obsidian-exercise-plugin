@@ -104,6 +104,26 @@ If `node`/`npm` aren't on PATH in your shell, Bun is installed at `/opt/homebrew
 
 CI (`.github/workflows/lint.yml`) runs build and lint on Node 20 and 22; both must pass. There is no test suite in the repo; logic in `store.ts`, `session.ts` and `sessionNote.ts` doesn't touch the DOM and can be tested with `bun test` by mocking the `obsidian` module (`moment`, `normalizePath`, `Notice`).
 
+## Versioning
+
+The plugin follows [semantic versioning](https://semver.org). From version 0.2.2 on, **every change pushed to `main` gets a version bump**, chosen by what the change does for users:
+
+| Bump | When | Examples |
+|---|---|---|
+| **Patch** (0.2.2 → 0.2.3) | Bug fixes, UI polish, wording and docs changes; no new behaviour | Column alignment fix, shorter exercise instructions |
+| **Minor** (0.2.2 → 0.3.0) | New features, and anything breaking: data format changes that need a migration, changed session-note format, removed or renamed commands or settings | Rest timer, default exercises, moving image URLs |
+| **Major** | Stays `0` until the user decides the plugin is 1.0. Don't bump it on your own. | |
+
+While the major version is 0, breaking changes bump the minor version. If a push contains several changes, use the largest bump that applies, once.
+
+How to bump, after the work itself is committed:
+
+- `npm version patch` (or `minor`). This updates `package.json` and `package-lock.json`, runs `version-bump.mjs` (sets `manifest.json`'s version and adds a `versions.json` entry only when `minAppVersion` changed), then commits and tags. `.npmrc` sets an empty tag prefix, so the tag is `0.2.3`, not `v0.2.3`, as Obsidian releases require.
+- Without npm, make the same edits by hand: `version` in `manifest.json`, `package.json`, and both places in `package-lock.json`; a `versions.json` entry only if `minAppVersion` changed. Then commit as "Bump version to x.y.z" and tag it `git tag x.y.z`.
+- Push with `git push origin main --follow-tags` so the tag goes too.
+- Copy the new `manifest.json` into the user's vault along with `main.js` and `styles.css`.
+- Mention the new version number when reporting a push.
+
 ## Lint gotchas (eslint-plugin-obsidianmd)
 
 - UI text must be sentence case. Labels starting with `+`, "e.g.", and the word "Rest" (read as the acronym REST) are flagged.
