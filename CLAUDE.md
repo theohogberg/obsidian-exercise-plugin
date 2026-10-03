@@ -119,8 +119,8 @@ While the major version is 0, breaking changes bump the minor version. If a push
 How to bump, after the work itself is committed:
 
 - `npm version patch` (or `minor`). This updates `package.json` and `package-lock.json`, runs `version-bump.mjs` (sets `manifest.json`'s version and adds a `versions.json` entry only when `minAppVersion` changed), then commits and tags. `.npmrc` sets an empty tag prefix, so the tag is `0.2.3`, not `v0.2.3`, as Obsidian releases require.
-- Without npm, make the same edits by hand: `version` in `manifest.json`, `package.json`, and both places in `package-lock.json`; a `versions.json` entry only if `minAppVersion` changed. Then commit as "Bump version to x.y.z" and tag it `git tag x.y.z`.
-- Push with `git push origin main --follow-tags` so the tag goes too.
+- Without npm, make the same edits by hand: `version` in `manifest.json`, `package.json`, and both places in `package-lock.json`; a `versions.json` entry only if `minAppVersion` changed. Then commit as "Bump version to x.y.z" and tag it with an **annotated** tag: `git tag -a x.y.z -m x.y.z`.
+- Push with `git push origin main --follow-tags` so the tag goes too. `--follow-tags` skips lightweight tags (plain `git tag x.y.z`), so check with `git ls-remote --tags origin`.
 - Copy the new `manifest.json` into the user's vault along with `main.js` and `styles.css`.
 - Mention the new version number when reporting a push.
 
