@@ -13,6 +13,11 @@ export class SessionView extends ItemView {
   private plugin: GymPlugin;
   private session: Session | null = null;
   private expandedHistory = new Set<string>();
+  // Rest timer: lives on the view, so it survives re-renders
+  private restEndsAt: number | null = null;
+  private restIntervalId: number | null = null;
+  private restEl: HTMLElement | null = null;
+  private restTextEl: HTMLElement | null = null;
 
   constructor(leaf: WorkspaceLeaf, plugin: GymPlugin) {
     super(leaf);
@@ -35,7 +40,61 @@ export class SessionView extends ItemView {
   setSession(session: Session | null): void {
     this.session = session;
     this.expandedHistory.clear();
+    this.stopRest();
     this.render();
+  }
+
+  private startRest(): void {
+    if (!this.plugin.settings.restTimerEnabled) return;
+    this.restEndsAt = Date.now() + this.plugin.settings.restSeconds * 1000;
+    if (this.restIntervalId === null) {
+      this.restIntervalId = this.registerInterval(window.setInterval(() => this.tickRest(), 250));
+    }
+    this.updateRest();
+  }
+
+  private adjustRest(seconds: number): void {
+    if (this.restEndsAt === null) return;
+    this.restEndsAt += seconds * 1000;
+    this.tickRest();
+  }
+
+  private stopRest(): void {
+    this.restEndsAt = null;
+    if (this.restIntervalId !== null) {
+      window.clearInterval(this.restIntervalId);
+      this.restIntervalId = null;
+    }
+    this.updateRest();
+  }
+
+  private tickRest(): void {
+    if (this.restEndsAt !== null && Date.now() >= this.restEndsAt) {
+      this.stopRest();
+      new Notice('Time for your next set');
+      navigator.vibrate?.(300);
+      return;
+    }
+    this.updateRest();
+  }
+
+  private updateRest(): void {
+    if (!this.restEl || !this.restTextEl) return;
+    this.restEl.toggleClass('is-hidden', this.restEndsAt === null);
+    if (this.restEndsAt === null) return;
+    const left = Math.max(0, Math.ceil((this.restEndsAt - Date.now()) / 1000));
+    this.restTextEl.setText(`Rest ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`);
+  }
+
+  private renderRest(el: HTMLElement): void {
+    this.restEl = el.createDiv('gym-rest-timer');
+    this.restTextEl = this.restEl.createSpan('gym-rest-time');
+    const btns = this.restEl.createDiv('gym-card-btns');
+    this.iconButton(btns, 'minus', '15 seconds less', false, () => this.adjustRest(-15));
+    this.iconButton(btns, 'plus', '15 seconds more', false, () => this.adjustRest(15));
+    const skip = btns.createEl('button', { text: 'Skip' });
+    skip.addEventListener('click', () => this.stopRest());
+    this.updateRest();
   }
 
   private persist(): void {
@@ -55,6 +114,8 @@ export class SessionView extends ItemView {
     const scrollTop = el.scrollTop;
     el.empty();
     el.addClass('gym-session-view');
+    this.restEl = null;
+    this.restTextEl = null;
 
     if (!this.session) {
       this.renderEmpty(el);
@@ -64,6 +125,7 @@ export class SessionView extends ItemView {
 
     el.createEl('h2', { text: session.programmeName || 'Workout' });
     el.createDiv({ cls: 'gym-session-meta', text: `Started ${moment(session.startedAt).format('ddd D MMM, HH:mm')}` });
+    this.renderRest(el);
 
     if (session.exercises.length === 0) {
       el.createEl('p', { text: 'No exercises yet.', cls: 'gym-empty' });
@@ -178,6 +240,7 @@ export class SessionView extends ItemView {
         set.done = done.checked;
         row.toggleClass('is-done', set.done);
         this.persist();
+        if (set.done) this.startRest();
       });
 
       this.iconButton(row, 'x', 'Remove set', false, () => {

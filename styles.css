@@ -177,3 +177,33 @@
   width: 100%;
   text-align: center;
 }
+
+/* Rest timer */
+
+.gym-rest-timer {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+.gym-rest-timer.is-hidden {
+  display: none;
+}
+
+.gym-rest-time {
+  font-size: 1.2em;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.gym-rest-timer .clickable-icon {
+  color: var(--text-on-accent);
+}
