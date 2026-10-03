@@ -4,39 +4,64 @@ export const EQUIPMENT_TYPES = ['barbell', 'dumbbell', 'machine', 'cable', 'body
 export type MuscleGroup = typeof MUSCLE_GROUPS[number];
 export type Equipment = typeof EQUIPMENT_TYPES[number];
 export type WeightUnit = 'kg' | 'lbs';
+export type PrefillFrom = 'exercise' | 'programme';
 
 export interface Exercise {
   id: string;
   name: string;
   muscleGroup: MuscleGroup;
   equipment: Equipment;
-  defaultSets: number;
-  defaultReps: number;
-  defaultWeight: number;
-  notes: string;
+  notes: string;                  // permanent cues
 }
 
-export interface SessionExercise {
-  exercise: Exercise;
-  sets: number;
-  reps: number;
-  weight: number;
-}
-
-export interface ProgrammeEntry {
+export interface ProgrammeExercise {
   exerciseId: string;
-  sets: number;
+  sets: number;                   // kept equal to the last values performed
   reps: number;
-  weight: number;
 }
 
 export interface Programme {
   id: string;
   name: string;
-  entries: ProgrammeEntry[];
+  exercises: ProgrammeExercise[]; // in training order
+}
+
+export interface LoggedSet {
+  weight: number;
+  reps: number;
+}
+
+export interface SetLog extends LoggedSet {
+  done: boolean;
+}
+
+export interface SessionExercise {
+  exerciseId: string;
+  name: string;                   // copied so a session survives the exercise being deleted
+  sets: SetLog[];
+  notes: string;
+}
+
+export interface Session {
+  id: string;
+  startedAt: string;              // ISO timestamp
+  programmeId: string | null;     // null = empty session
+  programmeName: string;
+  exercises: SessionExercise[];
+  notes: string;
+}
+
+export interface ExerciseLog {
+  date: string;                   // YYYY-MM-DD, local
+  programmeId: string | null;
+  sets: LoggedSet[];
+  notes: string;
+  notePath: string;               // session note, '' when migrated from old defaults
 }
 
 export interface GymData {
+  version: 2;
   exercises: Exercise[];
   programmes: Programme[];
+  history: Record<string, ExerciseLog[]>; // keyed by exerciseId, newest first
 }

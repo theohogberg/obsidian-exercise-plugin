@@ -1,16 +1,19 @@
 import { App, PluginSettingTab, Setting } from 'obsidian';
 import type GymPlugin from './main';
+import { PrefillFrom } from './types';
 
 export interface GymPluginSettings {
   sessionsFolder: string;
   weightUnit: 'kg' | 'lbs';
   openAfterSave: boolean;
+  prefillFrom: PrefillFrom;
 }
 
 export const DEFAULT_SETTINGS: GymPluginSettings = {
   sessionsFolder: 'Gym/Sessions',
   weightUnit: 'kg',
   openAfterSave: true,
+  prefillFrom: 'exercise',
 };
 
 export class GymSettingsTab extends PluginSettingTab {
@@ -24,12 +27,12 @@ export class GymSettingsTab extends PluginSettingTab {
   display(): void {
     const { containerEl } = this;
     containerEl.empty();
-    containerEl.createEl('h2', { text: 'Gym Plugin Settings' });
 
     new Setting(containerEl)
     .setName('Sessions folder')
     .setDesc('Folder where workout notes are saved')
     .addText(t => t
+             // eslint-disable-next-line obsidianmd/ui/sentence-case -- a folder path, not prose
              .setPlaceholder('Gym/Sessions')
              .setValue(this.plugin.settings.sessionsFolder)
              .onChange(async v => {
@@ -40,8 +43,8 @@ export class GymSettingsTab extends PluginSettingTab {
              new Setting(containerEl)
              .setName('Weight unit')
              .addDropdown(d => d
-                          .addOption('kg', 'kg')
-                          .addOption('lbs', 'lbs')
+                          .addOption('kg', 'Kilograms (kg)')
+                          .addOption('lbs', 'Pounds (lbs)')
                           .setValue(this.plugin.settings.weightUnit)
                           .onChange(async v => {
                             this.plugin.settings.weightUnit = v as 'kg' | 'lbs';
@@ -57,5 +60,17 @@ export class GymSettingsTab extends PluginSettingTab {
                                        this.plugin.settings.openAfterSave = v;
                                        await this.plugin.saveSettings();
                                      }));
+
+    new Setting(containerEl)
+    .setName('Prefill from')
+    .setDesc('Which previous workout fills in the weights and reps when you start a programme')
+    .addDropdown(d => d
+                 .addOption('exercise', 'Last time the exercise was done')
+                 .addOption('programme', 'Last time it was done in this programme')
+                 .setValue(this.plugin.settings.prefillFrom)
+                 .onChange(async v => {
+                   this.plugin.settings.prefillFrom = v as PrefillFrom;
+                   await this.plugin.saveSettings();
+                 }));
   }
 }
