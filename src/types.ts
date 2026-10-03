@@ -1,5 +1,8 @@
-export type MuscleGroup = 'chest' | 'back' | 'shoulders' | 'biceps' | 'legs' | 'core' | 'triceps';
-export type Equipment = 'barbell' | 'dumbbell' | 'machine' | 'cable' | 'bodyweight' | 'other';
+export const MUSCLE_GROUPS = ['chest', 'back', 'shoulders', 'biceps', 'legs', 'core', 'triceps'] as const;
+export const EQUIPMENT_TYPES = ['barbell', 'dumbbell', 'machine', 'cable', 'bodyweight', 'other'] as const;
+
+export type MuscleGroup = typeof MUSCLE_GROUPS[number];
+export type Equipment = typeof EQUIPMENT_TYPES[number];
 export type WeightUnit = 'kg' | 'lbs';
 
 export interface Exercise {

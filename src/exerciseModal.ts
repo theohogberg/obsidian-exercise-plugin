@@ -1,9 +1,6 @@
 import { App, Modal, Notice, Setting } from 'obsidian';
-import { Equipment, Exercise, MuscleGroup } from './types';
+import { Equipment, EQUIPMENT_TYPES, Exercise, MUSCLE_GROUPS, MuscleGroup } from './types';
 import { ExerciseStore } from './exercises';
-
-const MUSCLE_GROUPS: MuscleGroup[] = ['chest', 'back', 'shoulders', 'biceps', 'legs', 'core', 'triceps'];
-const EQUIPMENT_TYPES: Equipment[] = ['barbell', 'dumbbell', 'machine', 'cable', 'bodyweight', 'other'];
 
 function cap(s: string): string { return s.charAt(0).toUpperCase() + s.slice(1); }
 

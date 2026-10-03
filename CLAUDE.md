@@ -106,7 +106,7 @@ To try it in Obsidian, copy (or symlink the repo) `main.js`, `manifest.json`, an
 ## Conventions & Gotchas
 
 - Source files use 2-space indentation (despite `.editorconfig` specifying tabs); match the existing code.
-- The muscle-group list is duplicated in `types.ts`, `exerciseModal.ts` (`MUSCLE_GROUPS`), and `sessionModal.ts` (filter dropdown) — update all three when changing it. Same for equipment (`types.ts` + `exerciseModal.ts`).
+- `MUSCLE_GROUPS` and `EQUIPMENT_TYPES` in `types.ts` are the single source of truth; the `MuscleGroup`/`Equipment` types are derived from them. Import these arrays rather than re-listing values.
 - `WeightUnit` in `types.ts` is unused; `settings.ts` declares its own `'kg' | 'lbs'`.
 - Format dates with `moment` imported from `obsidian` (local time), not `toISOString()` (UTC — gives the wrong day near midnight).
 - `main.js` and `data.json` are gitignored build/runtime outputs — don't edit or commit them.

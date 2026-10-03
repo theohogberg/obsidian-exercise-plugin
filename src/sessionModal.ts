@@ -1,6 +1,6 @@
 import { App, Modal, moment, Notice, Setting } from 'obsidian';
 import { GymPluginSettings } from './settings';
-import { SessionExercise } from './types';
+import { MUSCLE_GROUPS, SessionExercise } from './types';
 import { ExerciseStore } from './exercises';
 
 export class SessionBuilderModal extends Modal {
@@ -77,7 +77,7 @@ export class SessionBuilderModal extends Modal {
 
     const muscleSelect = row.createEl('select');
     muscleSelect.createEl('option', { value: 'all', text: 'All muscles' });
-    (['chest', 'back', 'shoulders', 'biceps', 'legs', 'core', 'triceps'] as const).forEach(g => {
+    MUSCLE_GROUPS.forEach(g => {
       muscleSelect.createEl('option', { value: g, text: g.charAt(0).toUpperCase() + g.slice(1) });
     });
     muscleSelect.addEventListener('change', () => {
