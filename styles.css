@@ -241,3 +241,59 @@ button.gym-link-btn:hover {
 .gym-rest-timer .clickable-icon {
   color: var(--text-on-accent);
 }
+
+/* Library */
+
+.gym-group-heading {
+  margin: 16px 0 4px;
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Exercise info popup */
+
+.gym-info-modal .gym-exercise-meta {
+  margin-top: -8px;
+  margin-bottom: 12px;
+}
+
+.gym-media-container {
+  margin-bottom: 8px;
+}
+
+/* All frames share one grid cell, so swapping frames never shifts the layout */
+.gym-media {
+  display: grid;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--background-secondary);
+}
+
+.gym-media > img {
+  grid-area: 1 / 1;
+  width: 100%;
+  max-height: 360px;
+  object-fit: contain;
+}
+
+.gym-media > img.is-hidden {
+  visibility: hidden;
+}
+
+.gym-media-empty {
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--text-muted);
+  background: var(--background-secondary);
+  border-radius: 8px;
+}
+
+.gym-instructions {
+  padding-left: 1.4em;
+}
+
+.gym-instructions li {
+  margin-bottom: 6px;
+}

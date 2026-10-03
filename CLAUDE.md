@@ -15,6 +15,8 @@ An Obsidian plugin for logging gym workouts, modelled on the iPhone app RepCount
 - **Programme Sets/Reps track the last values performed**: when an exercise is added to a programme they come from its latest history (set count, reps of the first set; 3 × 8 if none), and `finishSession` updates them from the sets just done. They can still be edited by hand.
 - **Active session** is saved to `.gym/active-session.json` on every change and reopened on startup, so closing Obsidian mid-workout loses nothing. Only one session can be active.
 - **Finish** (`finishSession`): writes the note (ticked-off sets only), prepends an `ExerciseLog` to each exercise's history (capped at 20), updates the programme's Sets/Reps, saves, and clears the active session.
+- **Default exercises** (`defaultExercises.ts`, 39 exercises, 5–6 per muscle group, ids `default-*`): seeded on a brand-new vault; existing vaults add them via the "Add default exercises" command or library button (`GymStore.addDefaultExercises`, skips matching ids or names). Instructions and start/end photos come from free-exercise-db (public domain); photo URLs point at its GitHub raw files. The file was generated from the dataset, so regenerate rather than hand-edit if the list changes.
+- **Exercise info popup** (`ExerciseInfoModal`, ⓘ button in the workout tab, library and programme editor): media, cues, instructions. `Exercise.media` is a tagged union (`{ type: 'image', src }`, `src` = URL, vault path or `[[link]]`); `renderExerciseMedia` cycles through several images like a GIF. Web images are cached in `.gym/media/<host>/<path>` by `MediaCache` (`store.media`): downloaded when defaults are added (first run included, via `store.seededExercises`), by the "Download exercise images for offline use" command, and in the background the first time an uncached image is shown; `resolveMediaSrc` prefers the local copy. A 3D model renderer is planned: add a `{ type: 'model' }` variant and handle it in `renderExerciseMedia`.
 - **Rest timer**: ticking a set done starts a countdown in a sticky bar (settings `restTimerEnabled`, `restSeconds`).
 
 ## Session note format
@@ -51,8 +53,12 @@ src/
   session.ts         # createSession / buildSessionExercise (prefill rule), finishSession, programme-values helpers
   sessionNote.ts     # Session → markdown, note file naming
   sessionView.ts     # SessionView (ItemView tab): set logging, history, notes, rest timer, finish/discard
+  defaultExercises.ts # DEFAULT_EXERCISES (generated from free-exercise-db)
+  exerciseMedia.ts   # resolve and render exercise media (images now, 3D later)
+  mediaCache.ts      # MediaCache: offline copies of web images in .gym/media/
+  exerciseInfoModal.ts # ExerciseInfoModal: how to do an exercise
   pickers.ts         # ProgrammePickerModal, ExercisePickerModal (fuzzy search), confirmAction()
-  libraryModal.ts    # LibraryModal: list programmes (with Start) and exercises
+  libraryModal.ts    # LibraryModal: programmes (with Start) and exercises grouped by muscle group
   programmeModal.ts  # ProgrammeEditorModal: ordered exercises with Sets/Reps columns
   exerciseModal.ts   # ExerciseEditorModal
   settings.ts        # GymPluginSettings, DEFAULT_SETTINGS, GymSettingsTab
@@ -80,6 +86,8 @@ styles.css           # gym-* classes
 | Start empty session | `gym-start-empty-session` |
 | Open current workout | `gym-open-session` |
 | Manage programmes and exercises | `gym-manage-exercises` |
+| Add default exercises | `gym-add-default-exercises` |
+| Download exercise images for offline use | `gym-download-images` |
 
 ## Development
 
@@ -110,6 +118,7 @@ CI (`.github/workflows/lint.yml`) runs build and lint on Node 20 and 22; both mu
 
 - Exercises, programmes, history: `<vault>/.gym/data.json`
 - Workout in progress: `<vault>/.gym/active-session.json`
+- Offline copies of exercise images: `<vault>/.gym/media/`
 - Legacy (pre-v2, kept as backup): `<vault>/.gym/exercises.json`
 - Session notes: settings folder, default `Gym/Sessions/`
 - Plugin settings: `plugin.saveData()`, stored in `<vault>/.obsidian/plugins/gym-plugin/data.json`

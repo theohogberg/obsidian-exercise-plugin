@@ -1,4 +1,6 @@
 import { App, moment, normalizePath, Notice } from 'obsidian';
+import { DEFAULT_EXERCISES } from './defaultExercises';
+import { MediaCache } from './mediaCache';
 import { Exercise, ExerciseLog, GymData, PrefillFrom, Programme, ProgrammeExercise, Session } from './types';
 
 const DATA_DIR = '.gym';
@@ -35,9 +37,14 @@ export class GymStore {
   private data: GymData = emptyData();
   // Set when the data file exists but can't be read, so save() never overwrites it
   private loadFailed = false;
+  /** Local copies of exercise images in .gym/media/ */
+  readonly media: MediaCache;
+  /** Exercises added by the first-run seeding in load(), so the plugin can fetch their images. */
+  seededExercises: Exercise[] = [];
 
   constructor(app: App) {
     this.app = app;
+    this.media = new MediaCache(app);
   }
 
   async load(): Promise<void> {
@@ -55,6 +62,10 @@ export class GymStore {
         };
       } else if (await adapter.exists(legacyPath)) {
         this.data = migrateLegacy(JSON.parse(await adapter.read(legacyPath)) as LegacyData);
+        await this.save();
+      } else {
+        // First run: start with the default exercise library
+        this.seededExercises = this.addDefaultExercises();
         await this.save();
       }
     } catch (e) {
@@ -93,6 +104,21 @@ export class GymStore {
       p.exercises = p.exercises.filter(e => e.exerciseId !== id);
     });
     delete this.data.history[id];
+  }
+
+  /** Default exercises not already in the library (matched by id or name). */
+  getMissingDefaultExercises(): Exercise[] {
+    const ids = new Set(this.data.exercises.map(e => e.id));
+    const names = new Set(this.data.exercises.map(e => e.name.trim().toLowerCase()));
+    return DEFAULT_EXERCISES.filter(e => !ids.has(e.id) && !names.has(e.name.toLowerCase()));
+  }
+
+  /** Adds the missing default exercises and returns the ones added. */
+  addDefaultExercises(): Exercise[] {
+    // Copies, so edits never touch the DEFAULT_EXERCISES constants
+    const added = this.getMissingDefaultExercises().map(e => JSON.parse(JSON.stringify(e)) as Exercise);
+    this.data.exercises.push(...added);
+    return added;
   }
 
   upsertProgramme(programme: Programme): void {

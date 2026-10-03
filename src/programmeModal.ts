@@ -3,6 +3,7 @@ import { Programme, ProgrammeExercise } from './types';
 import { GymStore } from './store';
 import { ExercisePickerModal } from './pickers';
 import { defaultProgrammeValues } from './session';
+import { ExerciseInfoModal } from './exerciseInfoModal';
 
 export class ProgrammeEditorModal extends Modal {
   private store: GymStore;
@@ -61,12 +62,14 @@ export class ProgrammeEditorModal extends Modal {
 
     items.forEach((pe, idx) => {
       const row = el.createDiv('gym-programme-row');
-      const name = this.store.getExercise(pe.exerciseId)?.name ?? 'Unknown exercise';
+      const exercise = this.store.getExercise(pe.exerciseId);
+      const name = exercise?.name ?? 'Unknown exercise';
       row.createSpan({ text: `${idx + 1}. ${name}`, cls: 'gym-exercise-name', attr: { title: name } });
       this.numberInput(row, pe.sets, v => { pe.sets = v; });
       this.numberInput(row, pe.reps, v => { pe.reps = v; });
 
       const btns = row.createDiv('gym-card-btns');
+      if (exercise) this.iconButton(btns, 'info', 'How to do it', false, () => new ExerciseInfoModal(this.app, this.store, exercise).open());
       this.iconButton(btns, 'arrow-up', 'Move up', idx === 0, () => this.move(idx, -1));
       this.iconButton(btns, 'arrow-down', 'Move down', idx === items.length - 1, () => this.move(idx, 1));
       this.iconButton(btns, 'x', 'Remove', false, () => {

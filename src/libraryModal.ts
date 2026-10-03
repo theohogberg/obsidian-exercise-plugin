@@ -1,9 +1,11 @@
-import { App, Modal, Setting } from 'obsidian';
+import { App, Modal, Notice, Setting } from 'obsidian';
 import type GymPlugin from './main';
 import { GymStore } from './store';
 import { ExerciseEditorModal } from './exerciseModal';
 import { ProgrammeEditorModal } from './programmeModal';
 import { confirmAction } from './pickers';
+import { ExerciseInfoModal } from './exerciseInfoModal';
+import { MUSCLE_GROUPS } from './types';
 
 export class LibraryModal extends Modal {
   private plugin: GymPlugin;
@@ -68,23 +70,50 @@ export class LibraryModal extends Modal {
       new ExerciseEditorModal(this.app, this.store, null, () => this.render()).open();
     });
 
+    const missing = this.store.getMissingDefaultExercises().length;
+    if (missing > 0) {
+      new Setting(el)
+      .setName('Default exercises')
+      .setDesc(`${missing} common exercises with photos and instructions aren't in your library yet.`)
+      .addButton(b => b.setButtonText('Add them').onClick(() => { void this.addDefaults(); }));
+    }
+
     const exercises = this.store.getExercises();
     if (exercises.length === 0) {
       el.createEl('p', { text: 'No exercises yet.', cls: 'gym-empty' });
       return;
     }
 
-    exercises.forEach(ex => {
-      new Setting(el)
-      .setName(ex.name)
-      .setDesc(`${ex.muscleGroup} · ${ex.equipment}`)
-      .addButton(b => b.setIcon('pencil').setTooltip('Edit').onClick(() => {
-        new ExerciseEditorModal(this.app, this.store, ex, () => this.render()).open();
-      }))
-      .addButton(b => b.setIcon('trash').setTooltip('Delete').setWarning().onClick(() => {
-        void this.deleteExercise(ex.id, ex.name);
-      }));
-    });
+    for (const group of MUSCLE_GROUPS) {
+      const inGroup = exercises
+      .filter(ex => ex.muscleGroup === group)
+      .sort((a, b) => a.name.localeCompare(b.name));
+      if (inGroup.length === 0) continue;
+
+      el.createEl('h4', { text: group.charAt(0).toUpperCase() + group.slice(1), cls: 'gym-group-heading' });
+      inGroup.forEach(ex => {
+        new Setting(el)
+        .setName(ex.name)
+        .setDesc(ex.equipment)
+        .addExtraButton(b => b.setIcon('info').setTooltip('How to do it').onClick(() => {
+          new ExerciseInfoModal(this.app, this.store, ex).open();
+        }))
+        .addExtraButton(b => b.setIcon('pencil').setTooltip('Edit').onClick(() => {
+          new ExerciseEditorModal(this.app, this.store, ex, () => this.render()).open();
+        }))
+        .addExtraButton(b => b.setIcon('trash').setTooltip('Delete').onClick(() => {
+          void this.deleteExercise(ex.id, ex.name);
+        }));
+      });
+    }
+  }
+
+  private async addDefaults() {
+    const added = this.store.addDefaultExercises();
+    await this.store.save();
+    new Notice(`Added ${added.length} exercises`);
+    this.render();
+    await this.plugin.downloadExerciseImages(added);
   }
 
   private async deleteProgramme(id: string, name: string) {

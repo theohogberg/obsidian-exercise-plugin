@@ -1,6 +1,7 @@
 import { App, Modal, Notice, Setting } from 'obsidian';
 import { Equipment, EQUIPMENT_TYPES, Exercise, MUSCLE_GROUPS, MuscleGroup } from './types';
 import { GymStore } from './store';
+import { parseMediaLines } from './exerciseMedia';
 
 function cap(s: string): string { return s.charAt(0).toUpperCase() + s.slice(1); }
 
@@ -50,6 +51,14 @@ export class ExerciseEditorModal extends Modal {
     .setDesc('Cues shown every time you do this exercise, like seat height or grip')
     .addTextArea(t => t.setValue(this.exercise.notes)
                  .onChange(v => { this.exercise.notes = v; }));
+
+    new Setting(contentEl).setName('Images')
+    .setDesc('Image or GIF links, or vault paths, one per line. Several images play in turn.')
+    .addTextArea(t => {
+      t.setPlaceholder('https://…/start.jpg')
+      .setValue((this.exercise.media ?? []).map(m => m.src).join('\n'))
+      .onChange(v => { this.exercise.media = parseMediaLines(v); });
+    });
 
     new Setting(contentEl)
     .addButton(b => b.setButtonText('Save').setCta().onClick(() => { void this.save(); }))

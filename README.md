@@ -6,10 +6,16 @@ Inspired by [RepCount](https://apps.apple.com/us/app/repcount-gym-workout-tracke
 
 ## How it works
 
-1. **Manage programmes and exercises** (command palette): add exercises (name, muscle group, equipment, cues), then group them into programmes such as "Push day", in the order you train them.
+1. **Manage programmes and exercises** (command palette): the library starts with 39 common exercises, 5–6 per muscle group, each with photos, cues and instructions. Add your own (name, muscle group, equipment, cues, images), then group exercises into programmes such as "Push day", in the order you train them.
 2. **Start programme** (ribbon dumbbell or command palette): pick a programme. A workout tab opens with each exercise's sets prefilled with the weight and reps from last time.
 3. During the workout: edit weight and reps per set, tick sets off (this starts the timer between sets), add or remove sets and exercises, and write notes. Progress is saved continuously, so closing Obsidian doesn't lose the workout.
 4. **Finish workout**: ticked-off sets are written to a note like `Gym/Sessions/2026-10-04 Push day.md`, and become "last time" for next time. The programme's Sets and Reps update to what you did.
+
+### Exercise info
+
+The ⓘ button on an exercise (in the workout tab, the library and the programme editor) opens a popup showing how to do it: images, your cues and step-by-step instructions. Several images play in turn like a GIF. To add images or GIFs to your own exercises, put links or vault paths (one per line) in the exercise editor's Images field. Showing a 3D model of the movement is planned.
+
+Vaults created before default exercises existed can add them with **Add default exercises** (command palette or library). Exercises you already have with the same name are skipped.
 
 ## Session note
 
@@ -41,7 +47,11 @@ muscles: [chest, triceps]
 
 ## Data
 
-Exercises, programmes and per-exercise history are stored in `<vault>/.gym/data.json`, and a workout in progress in `<vault>/.gym/active-session.json`. Data from earlier versions (`.gym/exercises.json`) is migrated automatically and the old file is left in place.
+Exercises, programmes and per-exercise history are stored in `<vault>/.gym/data.json`, a workout in progress in `<vault>/.gym/active-session.json`, and downloaded exercise images in `<vault>/.gym/media/`. Data from earlier versions (`.gym/exercises.json`) is migrated automatically and the old file is left in place.
+
+## Network use
+
+The default exercises' photos come from GitHub (`raw.githubusercontent.com`, from the public-domain [free-exercise-db](https://github.com/yuhonas/free-exercise-db)). They are downloaded into `<vault>/.gym/media/` (about 5 MB) when the default exercises are added, so they work offline afterwards. Web images you add to your own exercises are saved there too the first time they're shown, or all at once with **Download exercise images for offline use**. Nothing else is sent or fetched.
 
 ## Development
 

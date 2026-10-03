@@ -5,7 +5,8 @@ import { LibraryModal } from './libraryModal';
 import { ProgrammePickerModal, confirmAction } from './pickers';
 import { createSession } from './session';
 import { SessionView, VIEW_TYPE_SESSION } from './sessionView';
-import { Programme } from './types';
+import { Exercise, Programme } from './types';
+import { webMediaUrls } from './mediaCache';
 
 export default class GymPlugin extends Plugin {
   settings!: GymPluginSettings;
@@ -45,10 +46,23 @@ export default class GymPlugin extends Plugin {
       callback: () => new LibraryModal(this.app, this).open(),
     });
 
+    this.addCommand({
+      id: 'gym-add-default-exercises',
+      name: 'Add default exercises',
+      callback: () => { void this.addDefaultExercises(); },
+    });
+
+    this.addCommand({
+      id: 'gym-download-images',
+      name: 'Download exercise images for offline use',
+      callback: () => { void this.downloadExerciseImages(this.store.getExercises()); },
+    });
+
     this.addSettingTab(new GymSettingsTab(this.app, this));
 
     // Reopen an unfinished workout, e.g. after Obsidian was closed mid-session
     this.app.workspace.onLayoutReady(() => {
+      if (this.store.seededExercises.length > 0) void this.downloadExerciseImages(this.store.seededExercises);
       void this.store.loadActiveSession().then(session => {
         if (session && this.app.workspace.getLeavesOfType(VIEW_TYPE_SESSION).length === 0) {
           void this.openSessionView();
@@ -66,6 +80,27 @@ export default class GymPlugin extends Plugin {
       return;
     }
     new ProgrammePickerModal(this.app, programmes, p => { void this.startSession(p); }).open();
+  }
+
+  async addDefaultExercises(): Promise<void> {
+    const added = this.store.addDefaultExercises();
+    await this.store.save();
+    new Notice(added.length > 0 ? `Added ${added.length} exercises` : 'All default exercises are already in your library');
+    if (added.length > 0) await this.downloadExerciseImages(added);
+  }
+
+  /** Save local copies of these exercises' web images, so they work offline. */
+  async downloadExerciseImages(exercises: Exercise[]): Promise<void> {
+    const urls = webMediaUrls(exercises);
+    if (urls.length === 0) {
+      new Notice('No exercise images to download');
+      return;
+    }
+    new Notice(`Downloading ${urls.length} exercise images…`);
+    const { downloaded, failed } = await this.store.media.downloadAll(urls);
+    new Notice(failed > 0
+      ? `${downloaded} exercise images are available offline; ${failed} couldn't be downloaded`
+      : `${downloaded} exercise images are available offline`);
   }
 
   async startSession(programme: Programme | null): Promise<void> {

@@ -1,6 +1,7 @@
 import { IconName, ItemView, moment, Notice, setIcon, WorkspaceLeaf } from 'obsidian';
 import type GymPlugin from './main';
 import { ExercisePickerModal, confirmAction } from './pickers';
+import { ExerciseInfoModal } from './exerciseInfoModal';
 import { buildSessionExercise, finishSession, summariseSets } from './session';
 import { Session, SessionExercise } from './types';
 
@@ -169,6 +170,7 @@ export class SessionView extends ItemView {
     if (exercise) title.createSpan({ text: `${exercise.muscleGroup} · ${exercise.equipment}`, cls: 'gym-exercise-meta' });
 
     const btns = header.createDiv('gym-card-btns');
+    if (exercise) this.iconButton(btns, 'info', 'How to do it', false, () => new ExerciseInfoModal(this.app, this.plugin.store, exercise).open());
     this.iconButton(btns, 'arrow-up', 'Move up', idx === 0, () => this.move(session, idx, -1));
     this.iconButton(btns, 'arrow-down', 'Move down', idx === session.exercises.length - 1, () => this.move(session, idx, 1));
     this.iconButton(btns, 'x', 'Remove exercise', false, () => {
