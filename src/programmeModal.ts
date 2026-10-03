@@ -23,7 +23,7 @@ export class ProgrammeEditorModal extends Modal {
   onOpen() {
     const { contentEl } = this;
     contentEl.empty();
-    contentEl.addClass('gym-programme-modal');
+    contentEl.addClass('gym-programme-modal', 'gym-form');
     contentEl.createEl('h2', { text: this.programme.name ? 'Edit programme' : 'New programme' });
 
     new Setting(contentEl).setName('Programme name')
@@ -62,7 +62,7 @@ export class ProgrammeEditorModal extends Modal {
     items.forEach((pe, idx) => {
       const row = el.createDiv('gym-programme-row');
       const name = this.store.getExercise(pe.exerciseId)?.name ?? 'Unknown exercise';
-      row.createSpan({ text: `${idx + 1}. ${name}`, cls: 'gym-exercise-name' });
+      row.createSpan({ text: `${idx + 1}. ${name}`, cls: 'gym-exercise-name', attr: { title: name } });
       this.numberInput(row, pe.sets, v => { pe.sets = v; });
       this.numberInput(row, pe.reps, v => { pe.reps = v; });
 

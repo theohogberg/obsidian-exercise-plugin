@@ -25,6 +25,7 @@ export class ExerciseEditorModal extends Modal {
   onOpen() {
     const { contentEl } = this;
     contentEl.empty();
+    contentEl.addClass('gym-form');
     contentEl.createEl('h2', { text: this.exercise.name ? 'Edit exercise' : 'New exercise' });
 
     new Setting(contentEl).setName('Name')

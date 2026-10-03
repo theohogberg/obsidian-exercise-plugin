@@ -48,22 +48,50 @@
   margin-left: auto;
 }
 
-.gym-set-header {
+/* Tables (session sets, programme exercises) are one grid per table, with
+   rows as `display: contents`, so header and row cells share the same columns.
+   Font size goes on the header cells, not the grid: the columns are in em. */
+.gym-set-header > span {
   font-size: 0.72em;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  text-align: center;
 }
 
-.gym-link-btn {
-  background: none !important;
-  box-shadow: none !important;
+.gym-sets input[type="number"],
+.gym-programme-list input[type="number"] {
+  width: 100%;
+  text-align: center;
+}
+
+button.gym-link-btn {
+  background: none;
+  box-shadow: none;
   border: none;
   padding: 2px 0;
   height: auto;
   color: var(--text-accent);
   font-size: 0.85em;
   cursor: pointer;
+}
+
+button.gym-link-btn:hover {
+  background: none;
+  text-decoration: underline;
+}
+
+/* Modal forms: give every control the same width so left edges line up */
+.gym-form .setting-item-control > input[type="text"],
+.gym-form .setting-item-control > select,
+.gym-form .setting-item-control > textarea {
+  width: 16em;
+  flex: 0 0 auto;
+}
+
+.gym-form .setting-item-control > textarea {
+  min-height: 4.5em;
+  resize: vertical;
 }
 
 /* Session view */
@@ -122,26 +150,22 @@
 }
 
 .gym-sets {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-bottom: 4px;
+  display: grid;
+  grid-template-columns: 2.5em minmax(0, 1fr) minmax(0, 1fr) 3.5em 2.5em;
+  column-gap: 8px;
+  row-gap: 6px;
+  align-items: center;
+  margin: 8px 0 4px;
 }
 
 .gym-set-row {
-  display: grid;
-  grid-template-columns: 2.5em 1fr 1fr 3em 2.5em;
-  gap: 8px;
-  align-items: center;
+  display: contents;
 }
 
-.gym-set-row input[type="number"] {
-  width: 100%;
-  text-align: center;
-}
-
-.gym-set-row input[type="checkbox"] {
+.gym-set-row input[type="checkbox"],
+.gym-set-row .clickable-icon {
   justify-self: center;
+  margin: 0;
 }
 
 .gym-set-row.is-done input[type="number"] {
@@ -162,20 +186,30 @@
 /* Programme editor */
 
 .gym-programme-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 4.5em 4.5em auto;
+  column-gap: 8px;
+  row-gap: 6px;
+  align-items: center;
   margin: 8px 0;
 }
 
-.gym-programme-row {
-  display: grid;
-  grid-template-columns: 1fr 4.5em 4.5em auto;
-  gap: 8px;
-  align-items: center;
-  padding: 4px 0;
+.gym-programme-list > .gym-empty {
+  grid-column: 1 / -1;
 }
 
-.gym-programme-row input[type="number"] {
-  width: 100%;
-  text-align: center;
+.gym-programme-row {
+  display: contents;
+}
+
+.gym-programme-list .gym-set-header > span:first-child {
+  text-align: start;
+}
+
+.gym-programme-row > .gym-exercise-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Rest timer */
