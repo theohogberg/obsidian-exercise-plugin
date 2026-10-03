@@ -1,4 +1,4 @@
-import { App, Modal, Notice, Setting } from 'obsidian';
+import { App, Modal, moment, Notice, Setting } from 'obsidian';
 import { GymPluginSettings } from './settings';
 import { SessionExercise } from './types';
 import { ExerciseStore } from './exercises';
@@ -184,8 +184,7 @@ export class SessionBuilderModal extends Modal {
   private async saveSession() {
     if (this.selected.length === 0) { new Notice('Add at least one exercise'); return; }
 
-    const date = new Date();
-    const dateStr = date.toISOString().split('T')[0] as string;
+    const dateStr = moment().format('YYYY-MM-DD');
     const unit = this.settings.weightUnit;
     const muscles = [...new Set(this.selected.map(s => s.exercise.muscleGroup))];
 
