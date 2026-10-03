@@ -1,126 +1,114 @@
 # Obsidian Gym Plugin
 
-An Obsidian plugin for tracking gym workouts, managing an exercise library and workout programmes, and logging sessions as Obsidian notes.
+An Obsidian plugin for logging gym workouts, modelled on the iPhone app RepCount. Plugin id `gym-plugin` (see `manifest.json`). `AGENTS.md` is the generic Obsidian sample-plugin guide; this file describes the actual project. The design rationale is in `docs/redesign-plan.md`.
 
-Domain terms (use these in code and UI):
-- **Exercise** — a single movement in the library (e.g. Bench Press)
-- **Programme** — a named, ordered set of exercises (e.g. "Push day")
-- **Session** — one performed workout, usually started from a programme
+## Domain terms (use these in code and UI)
 
-A redesign toward this model is planned in `docs/redesign-plan.md`; the sections below describe the code as it is today.
+- **Exercise**: one movement in the library (name, muscle group, equipment, permanent cues). Stores no weights.
+- **Programme**: a named, **ordered** list of exercises, each with Sets and Reps. Stores no weights.
+- **Session**: one performed workout, usually started from a programme. Logged per set (weight, reps, done).
+- **History**: per exercise, the sets performed in past sessions, newest first. This is the only place weights live.
 
-Plugin id `gym-plugin` (see `manifest.json`). Bootstrapped from the official Obsidian sample plugin — `AGENTS.md` and `README.md` are mostly the generic sample-plugin docs; this file describes the actual project.
+## Core behaviour
 
-## Core Features
+- **Prefill**: starting a programme builds a session where each exercise's sets copy the most recent history entry (`GymStore.getLastLog`). With no history, it uses the programme's Sets × Reps at weight 0. The `prefillFrom` setting picks "last time anywhere" (`'exercise'`, default) or "last time in this programme" (`'programme'`, falls back to anywhere).
+- **Programme Sets/Reps track the last values performed**: when an exercise is added to a programme they come from its latest history (set count, reps of the first set; 3 × 8 if none), and `finishSession` updates them from the sets just done. They can still be edited by hand.
+- **Active session** is saved to `.gym/active-session.json` on every change and reopened on startup, so closing Obsidian mid-workout loses nothing. Only one session can be active.
+- **Finish** (`finishSession`): writes the note (ticked-off sets only), prepends an `ExerciseLog` to each exercise's history (capped at 20), updates the programme's Sets/Reps, saves, and clears the active session.
+- **Rest timer**: ticking a set done starts a countdown in a sticky bar (settings `restTimerEnabled`, `restSeconds`).
 
-### Exercise Library
-- Stored as JSON in the vault at `.gym/exercises.json` (holds both exercises **and** programmes — see `GymData` in `types.ts`)
-- Each exercise has: `id`, `name`, `muscleGroup`, `equipment`, `defaultSets`, `defaultReps`, `defaultWeight`, `notes`
-- Muscle groups: chest, back, shoulders, biceps, legs, core, triceps
-- Equipment: barbell, dumbbell, machine, cable, bodyweight, other
-- Managed via `LibraryModal` (lists exercises + programmes with edit/delete buttons)
-- Deleting an exercise also removes it from every programme's entries
+## Session note format
 
-### Programmes
-- A `Programme` is `{ id, name, entries: ProgrammeEntry[] }`, where each entry is `{ exerciseId, sets, reps, weight }`
-- Created/edited in `ProgrammeEditorModal` (toggle exercises from the library and set sets/reps/weight per entry; entry order is the order exercises were toggled on, with no way to reorder)
-- Can also be created from the session builder via "Save as programme"
-- `.gym/exercises.json` files written before the rename store programmes under `templates`; `GymStore.load()` falls back to that key
-
-### Session Builder (`SessionBuilderModal`)
-- Optional "Load programme" dropdown (only shown if programmes exist) — appends the programme's exercises, skipping ones already selected
-- Search box + muscle-group filter over the library
-- Add exercises with "+ Add" (seeded from the exercise's defaults)
-- Reorder with ↑/↓ buttons (no drag-and-drop yet), remove with ×
-- Override sets/reps/weight per exercise for that session
-- **Save Session**: writes the note, then writes each exercise's session sets/reps/weight back as its new defaults (progressive-overload memory) and saves the store
-- **Save as programme**: prompts for a name (inline `NameModal` in `sessionModal.ts`) and saves the current selection as a programme
-
-### Session Note Format
-Saved in the configured folder (default `Gym/Sessions`). Filename `YYYY-MM-DD workout.md`; if it exists, `YYYY-MM-DD workout 1.md`, `… 2.md`, etc. The folder is created if missing.
+Folder from settings (default `Gym/Sessions`), filename `YYYY-MM-DD <programme name>.md` (`workout` for empty sessions; characters Obsidian forbids are stripped; ` 1`, ` 2`… on collisions). Set lines use a fixed `<weight><unit> × <reps>` format so they can be parsed back later.
 
 ```markdown
 ---
-date: 2024-01-15
+date: 2026-10-04
 type: workout
+programme: "Push day"
 muscles: [chest, triceps]
 ---
 
-# Workout — 2024-01-15
+# Push day — 2026-10-04
 
 ## Bench Press
-- Sets: 4 × 8 @ 80kg
-- Notes: <exercise notes, only if non-empty>
+- 85kg × 6
+- 82.5kg × 7
 
-## Tricep Pushdown
-- Sets: 3 × 12 @ 30kg
+> Felt heavy
+
+## Notes
+Good session
 ```
-
-### Settings (`GymPluginSettings` in `settings.ts`)
-- `sessionsFolder` — default `Gym/Sessions` (blank input falls back to default)
-- `weightUnit` — `kg` | `lbs`, appended to weights in session notes
-- `openAfterSave` — default `true`
 
 ## Architecture
 
 ```
 src/
-  main.ts                    # GymPlugin: loads settings + GymStore, registers ribbon icon, commands, settings tab
-  types.ts                   # Exercise, SessionExercise, ProgrammeEntry, Programme, GymData, MUSCLE_GROUPS, EQUIPMENT_TYPES
-  store.ts                   # GymStore — load/save .gym/exercises.json, CRUD for exercises and programmes
-  libraryModal.ts            # LibraryModal — exercise + programme manager ("Manage exercises" command)
-  exerciseModal.ts           # ExerciseEditorModal — add/edit a single exercise
-  programmeModal.ts          # ProgrammeEditorModal — add/edit a programme
-  sessionModal.ts            # SessionBuilderModal — build a session, save note / save as programme
-  settings.ts                # GymPluginSettings, DEFAULT_SETTINGS, GymSettingsTab
-styles.css                   # gym-* classes used by the modals
+  main.ts            # GymPlugin: commands, ribbon, view registration, startSession/openSessionView, resume on startup
+  types.ts           # Exercise, Programme, Session, SetLog, ExerciseLog, GymData; MUSCLE_GROUPS, EQUIPMENT_TYPES
+  store.ts           # GymStore: .gym/data.json (exercises, programmes, history), legacy migration, active-session file
+  session.ts         # createSession / buildSessionExercise (prefill rule), finishSession, programme-values helpers
+  sessionNote.ts     # Session → markdown, note file naming
+  sessionView.ts     # SessionView (ItemView tab): set logging, history, notes, rest timer, finish/discard
+  pickers.ts         # ProgrammePickerModal, ExercisePickerModal (fuzzy search), confirmAction()
+  libraryModal.ts    # LibraryModal: list programmes (with Start) and exercises
+  programmeModal.ts  # ProgrammeEditorModal: ordered exercises with Sets/Reps columns
+  exerciseModal.ts   # ExerciseEditorModal
+  settings.ts        # GymPluginSettings, DEFAULT_SETTINGS, GymSettingsTab
+styles.css           # gym-* classes
 ```
 
 ### Patterns
-- `GymStore` is a single in-memory instance owned by the plugin and passed into every modal. Mutations (`upsertExercise`, `deleteExercise`, `upsertProgramme`, `deleteProgramme`) are in-memory only — callers must `await store.save()` afterwards.
-- `getExercises()` / `getProgrammes()` return the live arrays, not copies. Editor modals clone (`{ ...exercise }`) before editing; `SessionBuilderModal` holds live references and mutates them on save.
-- The store uses `vault.adapter` (not the `Vault` API) because `.gym/` is a dot-folder that Obsidian doesn't index. Session notes use `vault.create`/`createFolder` so they appear in the vault normally.
-- Modals re-render by calling `contentEl.empty()` and rebuilding; child modals take an `onSave` callback that triggers the parent's re-render.
-- UI is built with Obsidian's `Setting` component plus `createEl`/`createDiv`. New CSS classes should use the `gym-` prefix.
-- IDs come from `crypto.randomUUID()`.
+
+- `GymStore` is a single in-memory instance owned by the plugin. Mutations (`upsertExercise`, `deleteExercise`, `upsertProgramme`, `deleteProgramme`, `addLog`) are in-memory only; callers must `await store.save()`. Getters return live objects, so editors copy before editing (the programme editor deep-copies so Cancel works).
+- If `data.json` exists but can't be parsed, `loadFailed` is set and `save()` throws rather than overwrite the user's data.
+- Migration: when `data.json` is missing and the legacy `.gym/exercises.json` exists, it is converted (old `defaultSets/Reps/Weight` seed one history entry, `templates`/`entries` become `programmes`/`exercises`) and `exercises.json` is left as a backup.
+- `.gym/` files use `vault.adapter` (it's a dot-folder Obsidian doesn't index); session notes use `vault.create`/`createFolder`.
+- Sessions copy `name` and `programmeName` so they survive deletions. Deleting an exercise removes it from programmes **and deletes its history** (the UI confirms first).
+- `SessionView` redraws everything on structural changes (`changed()`), but input edits only update the session object and `persist()`, so focus isn't lost while typing.
+- UI is built with `Setting` plus `createEl`/`createDiv`; icon buttons via `setIcon`. New CSS classes use the `gym-` prefix.
+- Dates: use `moment` imported from `obsidian` (local time), never `toISOString()` (UTC, wrong day near midnight). IDs come from `crypto.randomUUID()`.
+- Command ids are stable for users' hotkeys: `gym-new-session` is now "Start programme".
 
 ## Commands
 
-| Command | id | Description |
-|---|---|---|
-| `Gym: New session` | `gym-new-session` | Opens `SessionBuilderModal` (also on the `dumbbell` ribbon icon) |
-| `Gym: Manage exercises` | `gym-manage-exercises` | Opens `LibraryModal` |
-
-## Tech Stack
-
-- TypeScript (strict-ish: `noImplicitAny`, `strictNullChecks`, `noUncheckedIndexedAccess`), Obsidian API
-- esbuild bundles `src/main.ts` → `main.js` (CJS, es2018)
-- ESLint with `eslint-plugin-obsidianmd` recommended rules
-- No external runtime dependencies; data stored as JSON in the vault
+| Command | id |
+|---|---|
+| Start programme (also the dumbbell ribbon icon) | `gym-new-session` |
+| Start empty session | `gym-start-empty-session` |
+| Open current workout | `gym-open-session` |
+| Manage programmes and exercises | `gym-manage-exercises` |
 
 ## Development
 
 ```bash
 npm install
-npm run dev      # esbuild watch mode, writes main.js with inline sourcemaps
-npm run build    # tsc type-check (no emit) + minified production build
-npm run lint     # eslint .
+npm run dev      # esbuild watch mode
+npm run build    # tsc type-check + production build
+npm run lint     # eslint with eslint-plugin-obsidianmd
 ```
 
-CI (`.github/workflows/lint.yml`) runs `npm ci`, `npm run build`, and `npm run lint` on Node 20 and 22 — make sure both pass before pushing. There are no tests.
+If `node`/`npm` aren't on PATH in your shell, Bun is installed at `/opt/homebrew/bin/bun` and runs the same tools: `bun node_modules/typescript/bin/tsc -noEmit -skipLibCheck`, `bun node_modules/eslint/bin/eslint.js .`, `bun esbuild.config.mjs production`.
 
-To try it in Obsidian, copy (or symlink the repo) `main.js`, `manifest.json`, and `styles.css` into `<vault>/.obsidian/plugins/gym-plugin/`, then reload Obsidian. See `HOW-TO-RUN.md`.
+CI (`.github/workflows/lint.yml`) runs build and lint on Node 20 and 22; both must pass. There is no test suite in the repo; logic in `store.ts`, `session.ts` and `sessionNote.ts` doesn't touch the DOM and can be tested with `bun test` by mocking the `obsidian` module (`moment`, `normalizePath`, `Notice`).
 
-## Conventions & Gotchas
+## Lint gotchas (eslint-plugin-obsidianmd)
 
-- Source files use 2-space indentation (despite `.editorconfig` specifying tabs); match the existing code.
-- `MUSCLE_GROUPS` and `EQUIPMENT_TYPES` in `types.ts` are the single source of truth; the `MuscleGroup`/`Equipment` types are derived from them. Import these arrays rather than re-listing values.
-- `WeightUnit` in `types.ts` is unused; `settings.ts` declares its own `'kg' | 'lbs'`.
-- Format dates with `moment` imported from `obsidian` (local time), not `toISOString()` (UTC — gives the wrong day near midnight).
-- `main.js` and `data.json` are gitignored build/runtime outputs — don't edit or commit them.
+- UI text must be sentence case. Labels starting with `+`, "e.g.", and the word "Rest" (read as the acronym REST) are flagged.
+- Obsidian components (`Setting`, `DropdownComponent`, …) have a `then()` method, so an arrow function that *returns* one, like `forEach(g => d.addOption(g, g))`, is flagged as a misused promise. Use a block body: `forEach(g => { d.addOption(g, g); })`.
+- Async click handlers: wrap as `() => { void this.doThing(); }`.
+- No HTML headings in the settings tab.
 
-## Data Storage
+## Conventions
 
-- Exercise library + programmes: `<vault>/.gym/exercises.json`
-- Session notes: configurable folder, default `Gym/Sessions/`
-- Plugin settings: `plugin.saveData()` → `<vault>/.obsidian/plugins/gym-plugin/data.json`
+- Source uses 2-space indentation (despite `.editorconfig` saying tabs); match the existing code.
+- `main.js` and `data.json` are gitignored build/runtime outputs.
+
+## Data storage
+
+- Exercises, programmes, history: `<vault>/.gym/data.json`
+- Workout in progress: `<vault>/.gym/active-session.json`
+- Legacy (pre-v2, kept as backup): `<vault>/.gym/exercises.json`
+- Session notes: settings folder, default `Gym/Sessions/`
+- Plugin settings: `plugin.saveData()`, stored in `<vault>/.obsidian/plugins/gym-plugin/data.json`

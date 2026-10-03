@@ -1,5 +1,7 @@
 # Redesign plan: exercises → programmes → sessions
 
+> **Status: implemented.** Differences from the plan below: the pickers and confirm dialog live in `pickers.ts` (not `programmePicker.ts`); session persistence is in `store.ts`, and `session.ts` replaces `activeSession.ts`; phases 1–4 landed as one commit, and lint fixes went in with them. `CLAUDE.md` describes the code as built.
+
 ## Goal
 
 Pick a **programme**, start it, and get a **session** that already contains its **exercises** in order, each prefilled with what you did last time: per-set weights and reps, plus notes. Adjust while training, tick sets off, finish, and the session is saved as a note.

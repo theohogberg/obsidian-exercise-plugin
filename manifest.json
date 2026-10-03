@@ -2,8 +2,8 @@
 	"id": "gym-plugin",
 	"name": "Gym",
 	"version": "1.0.0",
-	"minAppVersion": "0.15.0",
-	"description": "Track gym workouts, manage exercises, and plan sessions.",
+	"minAppVersion": "0.16.0",
+	"description": "Build workout programmes, log sets with last time's weights prefilled, and save sessions as notes.",
 	"author": "Adam Theodor",
 	"isDesktopOnly": false
 }
