@@ -1,11 +1,11 @@
 import { App, normalizePath } from 'obsidian';
-import { Exercise, GymData, WorkoutTemplate } from './types';
+import { Exercise, GymData, Programme } from './types';
 
 const DATA_PATH = '.gym/exercises.json';
 
-export class ExerciseStore {
+export class GymStore {
   private app: App;
-  private data: GymData = { exercises: [], templates: [] };
+  private data: GymData = { exercises: [], programmes: [] };
 
   constructor(app: App) {
     this.app = app;
@@ -16,14 +16,15 @@ export class ExerciseStore {
       const path = normalizePath(DATA_PATH);
       if (await this.app.vault.adapter.exists(path)) {
         const raw = await this.app.vault.adapter.read(path);
-        const parsed = JSON.parse(raw) as Partial<GymData>;
+        // `templates` is the pre-rename key for programmes
+        const parsed = JSON.parse(raw) as Partial<GymData> & { templates?: Programme[] };
         this.data = {
           exercises: parsed.exercises ?? [],
-          templates: parsed.templates ?? [],
+          programmes: parsed.programmes ?? parsed.templates ?? [],
         };
       }
     } catch {
-      this.data = { exercises: [], templates: [] };
+      this.data = { exercises: [], programmes: [] };
     }
   }
 
@@ -37,7 +38,7 @@ export class ExerciseStore {
   }
 
   getExercises(): Exercise[] { return this.data.exercises; }
-  getTemplates(): WorkoutTemplate[] { return this.data.templates; }
+  getProgrammes(): Programme[] { return this.data.programmes; }
 
   upsertExercise(exercise: Exercise): void {
     const idx = this.data.exercises.findIndex(e => e.id === exercise.id);
@@ -47,18 +48,18 @@ export class ExerciseStore {
 
   deleteExercise(id: string): void {
     this.data.exercises = this.data.exercises.filter(e => e.id !== id);
-    this.data.templates.forEach(t => {
+    this.data.programmes.forEach(t => {
       t.entries = t.entries.filter(e => e.exerciseId !== id);
     });
   }
 
-  upsertTemplate(template: WorkoutTemplate): void {
-    const idx = this.data.templates.findIndex(t => t.id === template.id);
-    if (idx >= 0) this.data.templates[idx] = template;
-    else this.data.templates.push(template);
+  upsertProgramme(programme: Programme): void {
+    const idx = this.data.programmes.findIndex(t => t.id === programme.id);
+    if (idx >= 0) this.data.programmes[idx] = programme;
+    else this.data.programmes.push(programme);
   }
 
-  deleteTemplate(id: string): void {
-    this.data.templates = this.data.templates.filter(t => t.id !== id);
+  deleteProgramme(id: string): void {
+    this.data.programmes = this.data.programmes.filter(t => t.id !== id);
   }
 }

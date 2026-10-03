@@ -1,15 +1,15 @@
 import { App, Modal, Notice, Setting } from 'obsidian';
 import { Equipment, EQUIPMENT_TYPES, Exercise, MUSCLE_GROUPS, MuscleGroup } from './types';
-import { ExerciseStore } from './exercises';
+import { GymStore } from './store';
 
 function cap(s: string): string { return s.charAt(0).toUpperCase() + s.slice(1); }
 
 export class ExerciseEditorModal extends Modal {
-  private store: ExerciseStore;
+  private store: GymStore;
   private exercise: Exercise;
   private onSave: () => void;
 
-  constructor(app: App, store: ExerciseStore, exercise: Exercise | null, onSave: () => void) {
+  constructor(app: App, store: GymStore, exercise: Exercise | null, onSave: () => void) {
     super(app);
     this.store = store;
     this.onSave = onSave;

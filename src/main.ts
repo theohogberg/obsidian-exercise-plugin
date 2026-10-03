@@ -1,16 +1,16 @@
 import { Plugin } from 'obsidian';
 import { DEFAULT_SETTINGS, GymPluginSettings, GymSettingsTab } from './settings';
-import { ExerciseStore } from './exercises';
+import { GymStore } from './store';
 import { SessionBuilderModal } from './sessionModal';
 import { LibraryModal } from './libraryModal';
 
 export default class GymPlugin extends Plugin {
   settings!: GymPluginSettings;
-  store!: ExerciseStore;
+  store!: GymStore;
 
   async onload() {
     await this.loadSettings();
-    this.store = new ExerciseStore(this.app);
+    this.store = new GymStore(this.app);
     await this.store.load();
 
     this.addRibbonIcon('dumbbell', 'New gym session', () => {

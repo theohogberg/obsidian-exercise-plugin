@@ -1,18 +1,18 @@
 import { App, Modal, moment, Notice, Setting } from 'obsidian';
 import { GymPluginSettings } from './settings';
 import { MUSCLE_GROUPS, SessionExercise } from './types';
-import { ExerciseStore } from './exercises';
+import { GymStore } from './store';
 
 export class SessionBuilderModal extends Modal {
   private settings: GymPluginSettings;
-  private store: ExerciseStore;
+  private store: GymStore;
   private selected: SessionExercise[] = [];
   private filterMuscle = 'all';
   private searchQuery = '';
   private libraryEl!: HTMLElement;
   private selectedEl!: HTMLElement;
 
-  constructor(app: App, settings: GymPluginSettings, store: ExerciseStore) {
+  constructor(app: App, settings: GymPluginSettings, store: GymStore) {
     super(app);
     this.settings = settings;
     this.store = store;
@@ -24,7 +24,7 @@ export class SessionBuilderModal extends Modal {
     contentEl.addClass('gym-session-modal');
     contentEl.createEl('h2', { text: 'New Session' });
 
-    this.renderTemplateRow(contentEl);
+    this.renderProgrammeRow(contentEl);
     this.renderFilters(contentEl);
 
     contentEl.createEl('h3', { text: 'Exercise Library' });
@@ -38,25 +38,25 @@ export class SessionBuilderModal extends Modal {
     this.renderActions(contentEl);
   }
 
-  private renderTemplateRow(el: HTMLElement) {
-    const templates = this.store.getTemplates();
-    if (templates.length === 0) return;
+  private renderProgrammeRow(el: HTMLElement) {
+    const programmes = this.store.getProgrammes();
+    if (programmes.length === 0) return;
 
-    const row = el.createDiv('gym-template-row');
-    let selectedTemplateId = '';
+    const row = el.createDiv('gym-programme-row');
+    let selectedProgrammeId = '';
 
     const select = row.createEl('select');
-    select.createEl('option', { value: '', text: '— Load template —' });
-    templates.forEach(t => select.createEl('option', { value: t.id, text: t.name }));
-    select.addEventListener('change', () => { selectedTemplateId = select.value; });
+    select.createEl('option', { value: '', text: '— Load programme —' });
+    programmes.forEach(t => select.createEl('option', { value: t.id, text: t.name }));
+    select.addEventListener('change', () => { selectedProgrammeId = select.value; });
 
     const btn = row.createEl('button', { text: 'Load' });
     btn.addEventListener('click', () => {
-      if (!selectedTemplateId) return;
-      const template = templates.find(t => t.id === selectedTemplateId);
-      if (!template) return;
+      if (!selectedProgrammeId) return;
+      const programme = programmes.find(t => t.id === selectedProgrammeId);
+      if (!programme) return;
       const exercises = this.store.getExercises();
-      template.entries.forEach(entry => {
+      programme.entries.forEach(entry => {
         const ex = exercises.find(e => e.id === entry.exerciseId);
         if (!ex || this.selected.some(s => s.exercise.id === ex.id)) return;
         this.selected.push({ exercise: ex, sets: entry.sets, reps: entry.reps, weight: entry.weight });
@@ -177,8 +177,8 @@ export class SessionBuilderModal extends Modal {
     const row = el.createDiv('gym-action-row');
     const saveBtn = row.createEl('button', { text: 'Save Session', cls: 'mod-cta' });
     saveBtn.addEventListener('click', () => this.saveSession());
-    const tplBtn = row.createEl('button', { text: 'Save as Template' });
-    tplBtn.addEventListener('click', () => this.saveAsTemplate());
+    const programmeBtn = row.createEl('button', { text: 'Save as programme' });
+    programmeBtn.addEventListener('click', () => this.saveAsProgramme());
   }
 
   private async saveSession() {
@@ -240,11 +240,11 @@ export class SessionBuilderModal extends Modal {
     }
   }
 
-  private async saveAsTemplate() {
+  private async saveAsProgramme() {
     if (this.selected.length === 0) { new Notice('Add at least one exercise'); return; }
-    const name = await promptTemplateName(this.app);
+    const name = await promptProgrammeName(this.app);
     if (!name) return;
-    this.store.upsertTemplate({
+    this.store.upsertProgramme({
       id: crypto.randomUUID(),
       name,
       entries: this.selected.map(s => ({
@@ -255,19 +255,19 @@ export class SessionBuilderModal extends Modal {
       })),
     });
     await this.store.save();
-    new Notice(`Template "${name}" saved`);
+    new Notice(`Programme "${name}" saved`);
   }
 
   onClose() { this.contentEl.empty(); }
 }
 
-function promptTemplateName(app: App): Promise<string | null> {
+function promptProgrammeName(app: App): Promise<string | null> {
   return new Promise(resolve => {
     let resolved = false;
 
     class NameModal extends Modal {
       onOpen() {
-        this.contentEl.createEl('h3', { text: 'Template Name' });
+        this.contentEl.createEl('h3', { text: 'Programme name' });
         let name = '';
         new Setting(this.contentEl).setName('Name')
         .addText(t => t.onChange(v => { name = v; }));

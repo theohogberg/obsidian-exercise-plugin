@@ -1,12 +1,12 @@
 import { App, Modal, Setting } from 'obsidian';
-import { ExerciseStore } from './exercises';
+import { GymStore } from './store';
 import { ExerciseEditorModal } from './exerciseModal';
-import { ExerciseTemplateModal } from './exerciseTemplateModal';
+import { ProgrammeEditorModal } from './programmeModal';
 
 export class LibraryModal extends Modal {
-  private store: ExerciseStore;
+  private store: GymStore;
 
-  constructor(app: App, store: ExerciseStore) {
+  constructor(app: App, store: GymStore) {
     super(app);
     this.store = store;
   }
@@ -18,7 +18,7 @@ export class LibraryModal extends Modal {
     contentEl.empty();
     contentEl.createEl('h2', { text: 'Exercise Library' });
     this.renderExercises(contentEl);
-    this.renderTemplates(contentEl);
+    this.renderProgrammes(contentEl);
   }
 
   private renderExercises(el: HTMLElement) {
@@ -50,22 +50,22 @@ export class LibraryModal extends Modal {
     });
   }
 
-  private renderTemplates(el: HTMLElement) {
+  private renderProgrammes(el: HTMLElement) {
     const header = el.createDiv('gym-section-header');
-    header.createEl('h3', { text: 'Templates' });
-    const addBtn = header.createEl('button', { text: '+ New Template' });
+    header.createEl('h3', { text: 'Programmes' });
+    const addBtn = header.createEl('button', { text: '+ New programme' });
     addBtn.addEventListener('click', () => {
-      new ExerciseTemplateModal(this.app, this.store, null, () => this.render()).open();
+      new ProgrammeEditorModal(this.app, this.store, null, () => this.render()).open();
     });
 
-    const templates = this.store.getTemplates();
-    if (templates.length === 0) {
-      el.createEl('p', { text: 'No templates yet.', cls: 'gym-empty' });
+    const programmes = this.store.getProgrammes();
+    if (programmes.length === 0) {
+      el.createEl('p', { text: 'No programmes yet.', cls: 'gym-empty' });
       return;
     }
 
     const exercises = this.store.getExercises();
-    templates.forEach(t => {
+    programmes.forEach(t => {
       const names = t.entries
       .map(e => exercises.find(ex => ex.id === e.exerciseId)?.name)
       .filter((n): n is string => !!n)
@@ -75,10 +75,10 @@ export class LibraryModal extends Modal {
       .setName(t.name)
       .setDesc(names || 'No exercises')
       .addButton(b => b.setIcon('pencil').setTooltip('Edit').onClick(() => {
-        new ExerciseTemplateModal(this.app, this.store, t, () => this.render()).open();
+        new ProgrammeEditorModal(this.app, this.store, t, () => this.render()).open();
       }))
       .addButton(b => b.setIcon('trash').setTooltip('Delete').setWarning().onClick(async () => {
-        this.store.deleteTemplate(t.id);
+        this.store.deleteProgramme(t.id);
         await this.store.save();
         this.render();
       }));

@@ -1,25 +1,25 @@
 import { App, Modal, Notice, Setting } from 'obsidian';
-import { TemplateEntry, WorkoutTemplate } from './types';
-import { ExerciseStore } from './exercises';
+import { Programme, ProgrammeEntry } from './types';
+import { GymStore } from './store';
 
-export class ExerciseTemplateModal extends Modal {
-  private store: ExerciseStore;
-  private template: WorkoutTemplate;
-  private entryMap: Map<string, TemplateEntry>;
+export class ProgrammeEditorModal extends Modal {
+  private store: GymStore;
+  private programme: Programme;
+  private entryMap: Map<string, ProgrammeEntry>;
   private selectedIds: Set<string>;
   private onSave: () => void;
 
-  constructor(app: App, store: ExerciseStore, template: WorkoutTemplate | null, onSave: () => void) {
+  constructor(app: App, store: GymStore, programme: Programme | null, onSave: () => void) {
     super(app);
     this.store = store;
     this.onSave = onSave;
 
-    if (template) {
-      this.template = { id: template.id, name: template.name, entries: [] };
-      this.selectedIds = new Set(template.entries.map(e => e.exerciseId));
-      this.entryMap = new Map(template.entries.map(e => [e.exerciseId, { ...e }]));
+    if (programme) {
+      this.programme = { id: programme.id, name: programme.name, entries: [] };
+      this.selectedIds = new Set(programme.entries.map(e => e.exerciseId));
+      this.entryMap = new Map(programme.entries.map(e => [e.exerciseId, { ...e }]));
     } else {
-      this.template = { id: crypto.randomUUID(), name: '', entries: [] };
+      this.programme = { id: crypto.randomUUID(), name: '', entries: [] };
       this.selectedIds = new Set();
       this.entryMap = new Map();
     }
@@ -28,11 +28,11 @@ export class ExerciseTemplateModal extends Modal {
   onOpen() {
     const { contentEl } = this;
     contentEl.empty();
-    contentEl.createEl('h2', { text: this.template.name ? 'Edit Template' : 'New Template' });
+    contentEl.createEl('h2', { text: this.programme.name ? 'Edit programme' : 'New programme' });
 
-    new Setting(contentEl).setName('Template name')
-    .addText(t => t.setValue(this.template.name)
-           .onChange(v => { this.template.name = v; }));
+    new Setting(contentEl).setName('Programme name')
+    .addText(t => t.setValue(this.programme.name)
+           .onChange(v => { this.programme.name = v; }));
 
            contentEl.createEl('h3', { text: 'Select exercises' });
 
@@ -69,12 +69,12 @@ export class ExerciseTemplateModal extends Modal {
 
            new Setting(contentEl)
            .addButton(b => b.setButtonText('Save').setCta().onClick(async () => {
-             const name = this.template.name.trim();
-             if (!name) { new Notice('Template name is required'); return; }
+             const name = this.programme.name.trim();
+             if (!name) { new Notice('Programme name is required'); return; }
              if (this.selectedIds.size === 0) { new Notice('Select at least one exercise'); return; }
-             this.template.name = name;
-             this.template.entries = Array.from(this.selectedIds).map(id => this.entryMap.get(id)!);
-             this.store.upsertTemplate(this.template);
+             this.programme.name = name;
+             this.programme.entries = Array.from(this.selectedIds).map(id => this.entryMap.get(id)!);
+             this.store.upsertProgramme(this.programme);
              await this.store.save();
              this.onSave();
              this.close();

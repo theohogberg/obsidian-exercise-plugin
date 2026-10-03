@@ -23,20 +23,20 @@ export interface SessionExercise {
   weight: number;
 }
 
-export interface TemplateEntry {
+export interface ProgrammeEntry {
   exerciseId: string;
   sets: number;
   reps: number;
   weight: number;
 }
 
-export interface WorkoutTemplate {
+export interface Programme {
   id: string;
   name: string;
-  entries: TemplateEntry[];
+  entries: ProgrammeEntry[];
 }
 
 export interface GymData {
   exercises: Exercise[];
-  templates: WorkoutTemplate[];
+  programmes: Programme[];
 }
