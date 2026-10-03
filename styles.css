@@ -1,0 +1,132 @@
+.gym-session-modal {
+  min-width: 580px;
+}
+
+.gym-template-row,
+.gym-filter-row,
+.gym-action-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.gym-filter-row input[type="text"] {
+  flex: 1;
+  padding: 4px 8px;
+}
+
+.gym-library {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+  margin-bottom: 12px;
+}
+
+.gym-library-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  cursor: pointer;
+}
+
+.gym-library-item:last-child {
+  border-bottom: none;
+}
+
+.gym-library-item.is-selected {
+  background: var(--background-secondary);
+  opacity: 0.55;
+}
+
+.gym-library-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.gym-exercise-name {
+  font-weight: 500;
+}
+
+.gym-exercise-meta {
+  font-size: 0.8em;
+  color: var(--text-muted);
+}
+
+.gym-selected {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+.gym-session-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  flex-wrap: wrap;
+}
+
+.gym-session-item:last-child {
+  border-bottom: none;
+}
+
+.gym-session-controls {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  flex: 1;
+}
+
+.gym-num-field {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.gym-num-field label {
+  font-size: 0.72em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.gym-num-field input[type="number"] {
+  width: 58px;
+  text-align: center;
+}
+
+.gym-session-btns {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.gym-remove-btn {
+  color: var(--text-error) !important;
+}
+
+.gym-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+  margin-bottom: 8px;
+}
+
+.gym-section-header h3 {
+  margin: 0;
+}
+
+.gym-empty {
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 10px 12px;
+  margin: 0;
+}
