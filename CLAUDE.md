@@ -15,8 +15,8 @@ An Obsidian plugin for logging gym workouts, modelled on the iPhone app RepCount
 - **Programme Sets/Reps track the last values performed**: when an exercise is added to a programme they come from its latest history (set count, reps of the first set; 3 × 8 if none), and `finishSession` updates them from the sets just done. They can still be edited by hand.
 - **Active session** is saved to `.gym/active-session.json` on every change and reopened on startup, so closing Obsidian mid-workout loses nothing. Only one session can be active.
 - **Finish** (`finishSession`): writes the note (ticked-off sets only), prepends an `ExerciseLog` to each exercise's history (capped at 20), updates the programme's Sets/Reps, saves, and clears the active session.
-- **Default exercises** (`defaultExercises.ts`, 39 exercises, 5–6 per muscle group, ids `default-*`): seeded on a brand-new vault; existing vaults add them via the "Add default exercises" command or library button (`GymStore.addDefaultExercises`, skips matching ids or names). Instructions and start/end photos come from free-exercise-db (public domain); photo URLs point at its GitHub raw files. The file was generated from the dataset, so regenerate rather than hand-edit if the list changes.
-- **Exercise info popup** (`ExerciseInfoModal`, ⓘ button in the workout tab, library and programme editor): media, cues, instructions. `Exercise.media` is a tagged union (`{ type: 'image', src }`, `src` = URL, vault path or `[[link]]`); `renderExerciseMedia` cycles through several images like a GIF. Web images are cached in `.gym/media/<host>/<path>` by `MediaCache` (`store.media`): downloaded when defaults are added (first run included, via `store.seededExercises`), by the "Download exercise images for offline use" command, and in the background the first time an uncached image is shown; `resolveMediaSrc` prefers the local copy. A 3D model renderer is planned: add a `{ type: 'model' }` variant and handle it in `renderExerciseMedia`.
+- **Default exercises** (`defaultExercises.ts`, 39 exercises, 5–6 per muscle group, ids `default-*`): added automatically once per vault by `GymStore.load()` (new and existing vaults; skips matching ids or names; the `defaultsAdded` flag in data.json stops deleted ones coming back). The "Add default exercises" command or library button re-adds missing ones (`GymStore.addDefaultExercises`). Start/end photos come from free-exercise-db (public domain; URLs point at its GitHub raw files). Names, cues and how-tos are our own: a one-sentence `setup` (shown as "Setup:") followed by 2–3 short numbered movement `instructions`. Setup and instructions can't be edited in the app, so `syncDefaultHowTo()` in `load()` updates stored copies whenever the built-in text changes; other fields of default exercises may have been edited by the user and are never overwritten.
+- **Exercise info popup** (`ExerciseInfoModal`, ⓘ button in the workout tab, library and programme editor): media, cues, then "How to do it": **Setup:** line and numbered steps. `Exercise.media` is a tagged union (`{ type: 'image', src }`, `src` = URL, vault path or `[[link]]`); `renderExerciseMedia` cycles through several images like a GIF. Web images are cached in `.gym/media/<host>/<path>` by `MediaCache` (`store.media`): downloaded when defaults are added (first run included, via `store.seededExercises`), by the "Download exercise images for offline use" command, and in the background the first time an uncached image is shown; `resolveMediaSrc` prefers the local copy. A 3D model renderer is planned: add a `{ type: 'model' }` variant and handle it in `renderExerciseMedia`.
 - **Rest timer**: ticking a set done starts a countdown in a sticky bar (settings `restTimerEnabled`, `restSeconds`).
 
 ## Session note format
@@ -47,17 +47,17 @@ Good session
 
 ```
 src/
-  main.ts            # GymPlugin: commands, ribbon, view registration, startSession/openSessionView, resume on startup
+  main.ts            # GymPlugin: commands, ribbon (opens the Workouts tab), view registration, startSession/openSessionView, resume on startup
   types.ts           # Exercise, Programme, Session, SetLog, ExerciseLog, GymData; MUSCLE_GROUPS, EQUIPMENT_TYPES
   store.ts           # GymStore: .gym/data.json (exercises, programmes, history), legacy migration, active-session file
   session.ts         # createSession / buildSessionExercise (prefill rule), finishSession, programme-values helpers
   sessionNote.ts     # Session → markdown, note file naming
-  sessionView.ts     # SessionView (ItemView tab): set logging, history, notes, rest timer, finish/discard
-  defaultExercises.ts # DEFAULT_EXERCISES (generated from free-exercise-db)
+  sessionView.ts     # SessionView, the "Workouts" tab: home when idle (three buttons: Start session → programme list, Start empty session, Design programme; `homeMode`); set logging, history, notes, rest timer, finish/discard during a workout
+  defaultExercises.ts # DEFAULT_EXERCISES: the 39 default exercises (photos from free-exercise-db)
   exerciseMedia.ts   # resolve and render exercise media (images now, 3D later)
   mediaCache.ts      # MediaCache: offline copies of web images in .gym/media/
   exerciseInfoModal.ts # ExerciseInfoModal: how to do an exercise
-  pickers.ts         # ProgrammePickerModal, ExercisePickerModal (fuzzy search), confirmAction()
+  pickers.ts         # ExercisePickerModal (fuzzy search), confirmAction()
   libraryModal.ts    # LibraryModal: programmes (with Start) and exercises grouped by muscle group
   programmeModal.ts  # ProgrammeEditorModal: ordered exercises with Sets/Reps columns
   exerciseModal.ts   # ExerciseEditorModal
@@ -76,15 +76,14 @@ styles.css           # gym-* classes
 - UI is built with `Setting` plus `createEl`/`createDiv`; icon buttons via `setIcon`. New CSS classes use the `gym-` prefix.
 - Tables (`.gym-sets`, `.gym-programme-list`) are a single CSS grid with rows as `display: contents`, so header and rows share columns. Don't give a row its own grid, and don't set `font-size` on a row: the column widths are in `em`. Modal forms get the `gym-form` class for equal control widths.
 - Dates: use `moment` imported from `obsidian` (local time), never `toISOString()` (UTC, wrong day near midnight). IDs come from `crypto.randomUUID()`.
-- Command ids are stable for users' hotkeys: `gym-new-session` is now "Start programme".
+- Command ids are stable for users' hotkeys: `gym-new-session` is now "Open workouts". Programmes are started from the Workouts tab or the library, not a picker.
 
 ## Commands
 
 | Command | id |
 |---|---|
-| Start programme (also the dumbbell ribbon icon) | `gym-new-session` |
+| Open workouts (also the dumbbell ribbon icon, labelled "Workouts") | `gym-new-session` |
 | Start empty session | `gym-start-empty-session` |
-| Open current workout | `gym-open-session` |
 | Manage programmes and exercises | `gym-manage-exercises` |
 | Add default exercises | `gym-add-default-exercises` |
 | Download exercise images for offline use | `gym-download-images` |

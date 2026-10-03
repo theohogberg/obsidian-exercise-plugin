@@ -2,6 +2,7 @@ import { IconName, ItemView, moment, Notice, setIcon, WorkspaceLeaf } from 'obsi
 import type GymPlugin from './main';
 import { ExercisePickerModal, confirmAction } from './pickers';
 import { ExerciseInfoModal } from './exerciseInfoModal';
+import { ProgrammeEditorModal } from './programmeModal';
 import { buildSessionExercise, finishSession, summariseSets } from './session';
 import { Session, SessionExercise } from './types';
 
@@ -14,6 +15,8 @@ export class SessionView extends ItemView {
   private plugin: GymPlugin;
   private session: Session | null = null;
   private expandedHistory = new Set<string>();
+  // Home screen (no session running): the three-button menu, or the programme list
+  private homeMode: 'menu' | 'choose' = 'menu';
   // Rest timer: lives on the view, so it survives re-renders
   private restEndsAt: number | null = null;
   private restIntervalId: number | null = null;
@@ -26,7 +29,7 @@ export class SessionView extends ItemView {
   }
 
   getViewType(): string { return VIEW_TYPE_SESSION; }
-  getDisplayText(): string { return 'Workout'; }
+  getDisplayText(): string { return 'Workouts'; }
   getIcon(): IconName { return 'dumbbell'; }
 
   async onOpen(): Promise<void> {
@@ -38,8 +41,14 @@ export class SessionView extends ItemView {
     this.contentEl.empty();
   }
 
+  /** Redraw, e.g. after programmes changed elsewhere. */
+  refresh(): void {
+    this.render();
+  }
+
   setSession(session: Session | null): void {
     this.session = session;
+    this.homeMode = 'menu';
     this.expandedHistory.clear();
     this.stopRest();
     this.render();
@@ -119,7 +128,7 @@ export class SessionView extends ItemView {
     this.restTextEl = null;
 
     if (!this.session) {
-      this.renderEmpty(el);
+      this.renderHome(el);
       return;
     }
     const session = this.session;
@@ -151,14 +160,76 @@ export class SessionView extends ItemView {
     el.scrollTop = scrollTop;
   }
 
-  private renderEmpty(el: HTMLElement): void {
-    el.createEl('p', { text: 'No workout in progress.', cls: 'gym-empty' });
-    const row = el.createDiv('gym-action-row');
-    const startBtn = row.createEl('button', { text: 'Start programme', cls: 'mod-cta' });
-    startBtn.addEventListener('click', () => this.plugin.pickProgramme());
-    const emptyBtn = row.createEl('button', { text: 'Start empty session' });
-    emptyBtn.addEventListener('click', () => { void this.plugin.startSession(null); });
+  /** No session running: start one, or design a programme. */
+  private renderHome(el: HTMLElement): void {
+    el.createEl('h2', { text: 'Workouts' });
+    if (this.homeMode === 'choose') {
+      this.renderProgrammeChoice(el);
+      return;
+    }
+
+    const menu = el.createDiv('gym-home-menu');
+    this.menuButton(menu, 'play', 'Start session', 'Pick a programme. Weights and reps from last time are filled in.', true, () => {
+      this.homeMode = 'choose';
+      this.render();
+    });
+    this.menuButton(menu, 'plus', 'Start empty session', 'Add exercises as you go.', false, () => {
+      void this.plugin.startSession(null);
+    });
+    this.menuButton(menu, 'list-ordered', 'Design programme', 'Create a template for a session: exercises in order, with sets and reps.', false, () => {
+      new ProgrammeEditorModal(this.app, this.plugin.store, null, () => this.render()).open();
+    });
   }
+
+  private menuButton(parent: HTMLElement, icon: IconName, title: string, desc: string, cta: boolean, onClick: () => void): void {
+    const btn = parent.createEl('button', { cls: 'gym-menu-btn' });
+    if (cta) btn.addClass('mod-cta');
+    setIcon(btn.createSpan('gym-menu-icon'), icon);
+    const text = btn.createSpan('gym-menu-text');
+    text.createSpan({ text: title, cls: 'gym-menu-title' });
+    text.createSpan({ text: desc, cls: 'gym-menu-desc' });
+    btn.addEventListener('click', onClick);
+  }
+
+  private renderProgrammeChoice(el: HTMLElement): void {
+    const store = this.plugin.store;
+    const back = el.createEl('button', { text: 'Back', cls: 'gym-link-btn gym-back-btn' });
+    back.addEventListener('click', () => {
+      this.homeMode = 'menu';
+      this.render();
+    });
+    el.createEl('h3', { text: 'Choose a programme' });
+
+    const programmes = store.getProgrammes();
+    if (programmes.length === 0) {
+      el.createEl('p', { text: 'No programmes yet. Design one first.', cls: 'gym-empty' });
+      const design = el.createDiv('gym-action-row').createEl('button', { text: 'Design programme', cls: 'mod-cta' });
+      design.addEventListener('click', () => {
+        new ProgrammeEditorModal(this.app, store, null, () => this.render()).open();
+      });
+      return;
+    }
+
+    programmes.forEach(p => {
+      const card = el.createDiv('gym-card gym-programme-card');
+      const info = card.createDiv('gym-library-info');
+      info.createSpan({ text: p.name, cls: 'gym-exercise-name' });
+      const names = p.exercises
+      .map(e => store.getExercise(e.exerciseId)?.name)
+      .filter((n): n is string => !!n);
+      info.createSpan({ text: names.length > 0 ? names.join(', ') : 'No exercises', cls: 'gym-exercise-meta' });
+      const last = store.getLastProgrammeDate(p.id);
+      info.createSpan({ text: last ? `Last done ${moment(last).format('ddd D MMM')}` : 'Not done yet', cls: 'gym-exercise-meta' });
+
+      const btns = card.createDiv('gym-card-btns');
+      this.iconButton(btns, 'pencil', 'Edit programme', false, () => {
+        new ProgrammeEditorModal(this.app, store, p, () => this.render()).open();
+      });
+      const start = btns.createEl('button', { text: 'Start', cls: 'mod-cta' });
+      start.addEventListener('click', () => { void this.plugin.startSession(p); });
+    });
+  }
+
 
   private renderExercise(parent: HTMLElement, session: Session, ex: SessionExercise, idx: number): void {
     const exercise = this.plugin.store.getExercise(ex.exerciseId);

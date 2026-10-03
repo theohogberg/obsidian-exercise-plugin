@@ -39,7 +39,7 @@ export class GymStore {
   private loadFailed = false;
   /** Local copies of exercise images in .gym/media/ */
   readonly media: MediaCache;
-  /** Exercises added by the first-run seeding in load(), so the plugin can fetch their images. */
+  /** Exercises added automatically by load(), so the plugin can fetch their images. */
   seededExercises: Exercise[] = [];
 
   constructor(app: App) {
@@ -59,15 +59,21 @@ export class GymStore {
           exercises: parsed.exercises ?? [],
           programmes: parsed.programmes ?? [],
           history: parsed.history ?? {},
+          defaultsAdded: parsed.defaultsAdded ?? false,
         };
       } else if (await adapter.exists(legacyPath)) {
         this.data = migrateLegacy(JSON.parse(await adapter.read(legacyPath)) as LegacyData);
-        await this.save();
-      } else {
-        // First run: start with the default exercise library
-        this.seededExercises = this.addDefaultExercises();
-        await this.save();
       }
+      // Every vault gets the default exercises once (skipping names it already has),
+      // whether it's new or predates them
+      let changed = false;
+      if (!this.data.defaultsAdded) {
+        this.seededExercises = this.addDefaultExercises();
+        this.data.defaultsAdded = true;
+        changed = true;
+      }
+      if (this.syncDefaultHowTo()) changed = true;
+      if (changed) await this.save();
     } catch (e) {
       this.loadFailed = true;
       new Notice(`Gym: could not read ${DATA_DIR} data, changes won't be saved. ${(e as Error).message}`);
@@ -113,6 +119,29 @@ export class GymStore {
     return DEFAULT_EXERCISES.filter(e => !ids.has(e.id) && !names.has(e.name.toLowerCase()));
   }
 
+  /**
+   * A default exercise's setup and instructions can't be edited in the app, so keep
+   * the stored copies in step with the built-in text when it changes. Returns true
+   * if anything was updated. Other fields may have been edited and are left alone.
+   */
+  private syncDefaultHowTo(): boolean {
+    const builtIn = new Map(DEFAULT_EXERCISES.map(e => [e.id, e]));
+    let changed = false;
+    for (const ex of this.data.exercises) {
+      const def = builtIn.get(ex.id);
+      if (!def) continue;
+      if (ex.setup !== def.setup) {
+        ex.setup = def.setup;
+        changed = true;
+      }
+      if (JSON.stringify(ex.instructions ?? []) !== JSON.stringify(def.instructions ?? [])) {
+        ex.instructions = [...(def.instructions ?? [])];
+        changed = true;
+      }
+    }
+    return changed;
+  }
+
   /** Adds the missing default exercises and returns the ones added. */
   addDefaultExercises(): Exercise[] {
     // Copies, so edits never touch the DEFAULT_EXERCISES constants
@@ -144,6 +173,17 @@ export class GymStore {
       if (inProgramme) return inProgramme;
     }
     return history[0];
+  }
+
+  /** Date (YYYY-MM-DD) of the most recent finished session of a programme, if any. */
+  getLastProgrammeDate(programmeId: string): string | undefined {
+    let last: string | undefined;
+    for (const logs of Object.values(this.data.history)) {
+      for (const log of logs) {
+        if (log.programmeId === programmeId && (!last || log.date > last)) last = log.date;
+      }
+    }
+    return last;
   }
 
   addLog(exerciseId: string, log: ExerciseLog): void {

@@ -7,7 +7,10 @@ Inspired by [RepCount](https://apps.apple.com/us/app/repcount-gym-workout-tracke
 ## How it works
 
 1. **Manage programmes and exercises** (command palette): the library starts with 39 common exercises, 5–6 per muscle group, each with photos, cues and instructions. Add your own (name, muscle group, equipment, cues, images), then group exercises into programmes such as "Push day", in the order you train them.
-2. **Start programme** (ribbon dumbbell or command palette): pick a programme. A workout tab opens with each exercise's sets prefilled with the weight and reps from last time.
+2. **Workouts** (the dumbbell ribbon icon, or "Open workouts" in the command palette) opens the workout tab with three buttons:
+   - **Start session**: choose a programme (with when you last did it) and press Start. Each exercise's sets are prefilled with the weight and reps from last time.
+   - **Start empty session**: add exercises as you go.
+   - **Design programme**: create a template for a session: exercises in order, with sets and reps.
 3. During the workout: edit weight and reps per set, tick sets off (this starts the timer between sets), add or remove sets and exercises, and write notes. Progress is saved continuously, so closing Obsidian doesn't lose the workout.
 4. **Finish workout**: ticked-off sets are written to a note like `Gym/Sessions/2026-10-04 Push day.md`, and become "last time" for next time. The programme's Sets and Reps update to what you did.
 
@@ -15,7 +18,7 @@ Inspired by [RepCount](https://apps.apple.com/us/app/repcount-gym-workout-tracke
 
 The ⓘ button on an exercise (in the workout tab, the library and the programme editor) opens a popup showing how to do it: images, your cues and step-by-step instructions. Several images play in turn like a GIF. To add images or GIFs to your own exercises, put links or vault paths (one per line) in the exercise editor's Images field. Showing a 3D model of the movement is planned.
 
-Vaults created before default exercises existed can add them with **Add default exercises** (command palette or library). Exercises you already have with the same name are skipped.
+Vaults created before default exercises existed get them added once, automatically; exercises you already have with the same name are skipped. Default exercises you delete stay deleted. **Add default exercises** (command palette or library) adds back any you removed.
 
 ## Session note
 

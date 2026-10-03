@@ -1,16 +1,5 @@
 import { App, FuzzySuggestModal, Modal, Setting } from 'obsidian';
-import { Exercise, Programme } from './types';
-
-export class ProgrammePickerModal extends FuzzySuggestModal<Programme> {
-  constructor(app: App, private programmes: Programme[], private onChoose: (p: Programme) => void) {
-    super(app);
-    this.setPlaceholder('Start a programme…');
-  }
-
-  getItems(): Programme[] { return this.programmes; }
-  getItemText(p: Programme): string { return p.name; }
-  onChooseItem(p: Programme): void { this.onChoose(p); }
-}
+import { Exercise } from './types';
 
 export class ExercisePickerModal extends FuzzySuggestModal<Exercise> {
   constructor(app: App, private exercises: Exercise[], private onChoose: (e: Exercise) => void) {

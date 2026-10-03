@@ -20,7 +20,8 @@ export interface Exercise {
   equipment: Equipment;
   notes: string;                  // permanent cues
   media?: ExerciseMedia[];        // shown in order; several images play as an animation
-  instructions?: string[];        // step-by-step, shown in the info popup
+  setup?: string;                 // how to get into position, shown before the steps
+  instructions?: string[];        // the movement, step by step
 }
 
 export interface ProgrammeExercise {
@@ -73,4 +74,5 @@ export interface GymData {
   exercises: Exercise[];
   programmes: Programme[];
   history: Record<string, ExerciseLog[]>; // keyed by exerciseId, newest first
+  defaultsAdded?: boolean;                // default exercises were added once; deleted ones stay deleted
 }

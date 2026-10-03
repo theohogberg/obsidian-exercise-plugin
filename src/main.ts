@@ -2,7 +2,7 @@ import { Notice, Plugin } from 'obsidian';
 import { DEFAULT_SETTINGS, GymPluginSettings, GymSettingsTab } from './settings';
 import { GymStore } from './store';
 import { LibraryModal } from './libraryModal';
-import { ProgrammePickerModal, confirmAction } from './pickers';
+import { confirmAction } from './pickers';
 import { createSession } from './session';
 import { SessionView, VIEW_TYPE_SESSION } from './sessionView';
 import { Exercise, Programme } from './types';
@@ -19,25 +19,19 @@ export default class GymPlugin extends Plugin {
 
     this.registerView(VIEW_TYPE_SESSION, leaf => new SessionView(leaf, this));
 
-    this.addRibbonIcon('dumbbell', 'Start programme', () => this.pickProgramme());
+    this.addRibbonIcon('dumbbell', 'Workouts', () => { void this.openSessionView(); });
 
     // Keeps the old "New session" id so existing hotkeys still work
     this.addCommand({
       id: 'gym-new-session',
-      name: 'Start programme',
-      callback: () => this.pickProgramme(),
+      name: 'Open workouts',
+      callback: () => { void this.openSessionView(); },
     });
 
     this.addCommand({
       id: 'gym-start-empty-session',
       name: 'Start empty session',
       callback: () => { void this.startSession(null); },
-    });
-
-    this.addCommand({
-      id: 'gym-open-session',
-      name: 'Open current workout',
-      callback: () => { void this.openSessionView(); },
     });
 
     this.addCommand({
@@ -73,13 +67,11 @@ export default class GymPlugin extends Plugin {
 
   onunload() {}
 
-  pickProgramme(): void {
-    const programmes = this.store.getProgrammes();
-    if (programmes.length === 0) {
-      new Notice('No programmes yet. Create one in the programme manager first.');
-      return;
-    }
-    new ProgrammePickerModal(this.app, programmes, p => { void this.startSession(p); }).open();
+  /** Redraw open workout tabs, e.g. after programmes or exercises changed. */
+  refreshSessionViews(): void {
+    this.app.workspace.getLeavesOfType(VIEW_TYPE_SESSION).forEach(leaf => {
+      if (leaf.view instanceof SessionView) leaf.view.refresh();
+    });
   }
 
   async addDefaultExercises(): Promise<void> {

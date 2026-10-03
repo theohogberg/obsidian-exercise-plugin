@@ -297,3 +297,68 @@ button.gym-link-btn:hover {
 .gym-instructions li {
   margin-bottom: 6px;
 }
+
+/* Workouts home */
+
+.gym-programme-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.gym-programme-card .gym-card-btns {
+  align-items: center;
+  gap: 8px;
+}
+
+.gym-home-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+button.gym-menu-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: auto;
+  padding: 16px 18px;
+  text-align: start;
+  white-space: normal;
+  justify-content: flex-start;
+}
+
+.gym-menu-icon {
+  display: flex;
+  flex: 0 0 auto;
+}
+
+.gym-menu-icon .svg-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.gym-menu-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.gym-menu-title {
+  font-size: 1.1em;
+  font-weight: 600;
+}
+
+.gym-menu-desc {
+  font-size: 0.85em;
+  opacity: 0.8;
+}
+
+button.gym-back-btn {
+  margin-bottom: 4px;
+}
+
+.gym-setup {
+  margin-bottom: 8px;
+}

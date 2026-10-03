@@ -32,10 +32,16 @@ export class ExerciseInfoModal extends Modal {
       contentEl.createEl('p', { text: ex.notes, cls: 'gym-cues' });
     }
 
-    if (ex.instructions && ex.instructions.length > 0) {
+    const steps = ex.instructions ?? [];
+    if (ex.setup || steps.length > 0) {
       contentEl.createEl('h3', { text: 'How to do it' });
+      if (ex.setup) {
+        const setup = contentEl.createEl('p', { cls: 'gym-setup' });
+        setup.createEl('strong', { text: 'Setup:' });
+        setup.appendText(` ${ex.setup}`);
+      }
       const list = contentEl.createEl('ol', 'gym-instructions');
-      ex.instructions.forEach(step => list.createEl('li', { text: step }));
+      steps.forEach(step => list.createEl('li', { text: step }));
     }
   }
 

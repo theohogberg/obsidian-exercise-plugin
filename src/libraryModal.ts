@@ -131,5 +131,8 @@ export class LibraryModal extends Modal {
     this.render();
   }
 
-  onClose() { this.contentEl.empty(); }
+  onClose() {
+    this.contentEl.empty();
+    this.plugin.refreshSessionViews();
+  }
 }
