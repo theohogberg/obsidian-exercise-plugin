@@ -102,7 +102,7 @@ npm run exercises # regenerate src/defaultExercises.ts from assets/exercises/*/R
 
 If `node`/`npm` aren't on PATH in your shell, Bun is installed at `/opt/homebrew/bin/bun` and runs the same tools: `bun node_modules/typescript/bin/tsc -noEmit -skipLibCheck`, `bun node_modules/eslint/bin/eslint.js .`, `bun esbuild.config.mjs production`.
 
-CI (`.github/workflows/lint.yml`) runs build and lint on Node 20 and 22; both must pass. There is no test suite in the repo; logic in `store.ts`, `session.ts` and `sessionNote.ts` doesn't touch the DOM and can be tested with `bun test` by mocking the `obsidian` module (`moment`, `normalizePath`, `Notice`).
+CI (`.github/workflows/lint.yml`) runs build and lint on Node 22, 24 and 26; all must pass. `.nvmrc` pins local development to Node 24 (the current LTS). Keep the CI matrix to supported release lines: drop a version when it reaches end of life and add the new even-numbered release once it is out (schedule: https://github.com/nodejs/release#release-schedule). There is no test suite in the repo; logic in `store.ts`, `session.ts` and `sessionNote.ts` doesn't touch the DOM and can be tested with `bun test` by mocking the `obsidian` module (`moment`, `normalizePath`, `Notice`).
 
 ## Versioning
 
