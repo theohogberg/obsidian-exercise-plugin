@@ -78,6 +78,7 @@ npm run build
 
 ## Testing
 
+- Automated: `npm test` (Vitest; see "Tests" in `CLAUDE.md`). CI runs it on every push.
 - Manual install for testing: copy `main.js`, `manifest.json`, `styles.css` (if any) to:
   ```
   <Vault>/.obsidian/plugins/<plugin-id>/

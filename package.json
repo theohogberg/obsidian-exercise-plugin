@@ -3,7 +3,7 @@
 	"version": "0.3.0",
 	"description": "Build workout programmes, log sets with last time's weights prefilled, and save sessions as notes.",
 	"private": true,
-	"author": "Adam Theodor",
+	"author": "theohog",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/theohogberg/obsidian-exercise-plugin.git"
@@ -16,6 +16,7 @@
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
 		"build": "node scripts/build-exercises.mjs --check && tsc && node esbuild.config.mjs production",
+		"test": "tsc -p tests && vitest run",
 		"exercises": "node scripts/build-exercises.mjs",
 		"version": "node version-bump.mjs && git add manifest.json versions.json",
 		"lint": "eslint ."
@@ -33,9 +34,12 @@
 		"eslint": "^10.12.0",
 		"eslint-plugin-obsidianmd": "^0.4.2",
 		"globals": "^17.13.0",
+		"happy-dom": "^20.14.5",
 		"jiti": "^2.7.0",
+		"moment": "^2.31.0",
 		"obsidian": "^1.13.1",
 		"typescript": "^6.0.3",
-		"typescript-eslint": "^8.71.0"
+		"typescript-eslint": "^8.71.0",
+		"vitest": "^5.0.3"
 	}
 }

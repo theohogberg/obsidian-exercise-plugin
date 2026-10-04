@@ -1,0 +1,10 @@
+{
+	// Type-checks the tests together with the plugin source (`npm test` runs `tsc -p tests`).
+	"extends": "../tsconfig.json",
+	"compilerOptions": {
+		// Tests run in Node (or happy-dom), so Node's types are allowed here
+		"types": ["node"],
+		"lib": ["DOM", "DOM.Iterable", "ES2022"]
+	},
+	"include": ["**/*.ts", "../src/**/*.ts"]
+}

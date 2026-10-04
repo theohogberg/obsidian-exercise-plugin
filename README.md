@@ -63,6 +63,7 @@ npm install
 npm run dev     # watch mode
 npm run build   # type-check + production build
 npm run lint
+npm test            # type-check and run the tests (Vitest)
 npm run exercises   # regenerate src/defaultExercises.ts from assets/exercises
 ```
 
