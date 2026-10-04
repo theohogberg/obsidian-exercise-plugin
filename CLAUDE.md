@@ -1,6 +1,6 @@
 # Obsidian Gym Plugin
 
-An Obsidian plugin for logging gym workouts, modelled on the iPhone app RepCount. Plugin id `gym-plugin` (see `manifest.json`). `AGENTS.md` is the generic Obsidian sample-plugin guide; this file describes the actual project. The design rationale is in `docs/redesign-plan.md`.
+An Obsidian plugin for logging gym workouts, modelled on the iPhone app RepCount. Plugin id `gym-plugin` (see `manifest.json`). `AGENTS.md` is a general Obsidian plugin guide; this file describes the actual project. The design rationale is in `docs/redesign-plan.md`.
 
 ## Domain terms (use these in code and UI)
 
@@ -100,7 +100,7 @@ npm run lint     # eslint with eslint-plugin-obsidianmd
 npm run exercises # regenerate src/defaultExercises.ts from assets/exercises/*/README.md
 ```
 
-Node 24 and npm are installed locally (Homebrew), so use the npm scripts above. Bun (`/opt/homebrew/bin/bun`) is also installed: it runs ad-hoc logic tests (`bun test`, see below) and can run the same tools if npm is ever unavailable: `bun node_modules/typescript/bin/tsc -noEmit -skipLibCheck`, `bun node_modules/eslint/bin/eslint.js .`, `bun esbuild.config.mjs production`.
+Node 24 and npm are installed locally (Homebrew), so use the npm scripts above. Bun (`/opt/homebrew/bin/bun`) is also installed: it runs ad-hoc logic tests (`bun test`, see below) and can run the same tools if npm is ever unavailable: `bun node_modules/typescript/bin/tsc`, `bun node_modules/eslint/bin/eslint.js .`, `bun esbuild.config.mjs production`.
 
 CI (`.github/workflows/lint.yml`) runs build and lint on Node 22, 24 and 26; all must pass. `.nvmrc` pins local development to Node 24 (the current LTS). Keep the CI matrix to supported release lines: drop a version when it reaches end of life and add the new even-numbered release once it is out (schedule: https://github.com/nodejs/release#release-schedule). There is no test suite in the repo; logic in `store.ts`, `session.ts` and `sessionNote.ts` doesn't touch the DOM and can be tested with `bun test` by mocking the `obsidian` module (`moment`, `normalizePath`, `Notice`).
 
@@ -126,14 +126,24 @@ How to bump, after the work itself is committed:
 
 ## Lint gotchas (eslint-plugin-obsidianmd)
 
+- `obsidianmd/no-unsupported-api` checks every Obsidian API against `minAppVersion` in `manifest.json` (currently 1.7.2, set by `Workspace.revealLeaf`). Using a newer API means raising `minAppVersion`, which needs a `versions.json` entry and is a minor version bump. The remaining warnings (`setWarning` → `setDestructive`, declarative settings via `getSettingDefinitions()`) need Obsidian 1.13 and are left until `minAppVersion` reaches it.
+- Disabling `obsidianmd/ui/sentence-case` with an `eslint-disable` comment is itself an error; reword the text, or pass a non-literal (e.g. `DEFAULT_SETTINGS.sessionsFolder`).
 - UI text must be sentence case. Labels starting with `+`, "e.g.", and the word "Rest" (read as the acronym REST) are flagged.
 - Obsidian components (`Setting`, `DropdownComponent`, …) have a `then()` method, so an arrow function that *returns* one, like `forEach(g => d.addOption(g, g))`, is flagged as a misused promise. Use a block body: `forEach(g => { d.addOption(g, g); })`.
 - Async click handlers: wrap as `() => { void this.doThing(); }`.
 - No HTML headings in the settings tab.
 
+## Tooling limits
+
+- **TypeScript 6.0.x is the newest usable version**: typescript-eslint supports TypeScript below 6.1, so TypeScript 7 would break linting.
+- `tsconfig.json` sets `esModuleInterop: false` with `ignoreDeprecations: "6.0"` because `obsidian.d.ts` types `moment` via `import * as Moment`, which is only callable under the old interop rules. Remove both once Obsidian's typings change.
+- `tsconfig.json` is type-check only (`noEmit`; esbuild bundles) with `strict` on and `types: []`, so Node globals can't creep into plugin code that also runs on mobile.
+- ESLint is on 10. `eslint-plugin-obsidianmd` pins `@eslint/js` to 9 and some of its bundled rule plugins only support ESLint 9, so npm installs a nested ESLint 9 for them; that's expected.
+- `npm audit` reports `moment` (inside the `obsidian` type package). Obsidian supplies `moment` at runtime, so it doesn't apply; npm's suggested fix (downgrading `obsidian` to 0.14) is wrong.
+
 ## Conventions
 
-- Source uses 2-space indentation (despite `.editorconfig` saying tabs); match the existing code.
+- Indentation follows `.editorconfig`: 2 spaces for TypeScript, CSS, Markdown and scripts; tabs for JSON files and the esbuild/ESLint configs.
 - `main.js` and `data.json` are gitignored build/runtime outputs.
 
 ## Data storage

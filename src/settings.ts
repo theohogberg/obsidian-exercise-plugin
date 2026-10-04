@@ -37,8 +37,7 @@ export class GymSettingsTab extends PluginSettingTab {
     .setName('Sessions folder')
     .setDesc('Folder where workout notes are saved')
     .addText(t => t
-             // eslint-disable-next-line obsidianmd/ui/sentence-case -- a folder path, not prose
-             .setPlaceholder('Gym/Sessions')
+             .setPlaceholder(DEFAULT_SETTINGS.sessionsFolder)
              .setValue(settings.sessionsFolder)
              .onChange(async v => {
                settings.sessionsFolder = v.trim() || DEFAULT_SETTINGS.sessionsFolder;

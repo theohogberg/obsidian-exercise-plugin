@@ -1,30 +1,25 @@
 {
 	"compilerOptions": {
-		"baseUrl": "src",
-		"inlineSourceMap": true,
-		"inlineSources": true,
+		// Type-checking only: esbuild does the bundling (see esbuild.config.mjs)
+		"noEmit": true,
+		"skipLibCheck": true,
+		"target": "ES2020",
+		"lib": ["DOM", "DOM.Iterable", "ES2020"],
 		"module": "ESNext",
-		"target": "ES6",
-		"allowJs": true,
-		"noImplicitAny": true,
-		"noImplicitThis": true,
-		"noImplicitReturns": true,
-		"moduleResolution": "node",
-		"importHelpers": true,
-		"noUncheckedIndexedAccess": true,
+		"moduleResolution": "bundler",
 		"isolatedModules": true,
-		"strictNullChecks": true,
-		"strictBindCallApply": true,
+		// obsidian.d.ts types `moment` as `typeof import * as Moment`, which is only callable
+		// with the pre-TS6 interop rules. TS 6 deprecates turning esModuleInterop off, hence
+		// ignoreDeprecations. Remove both once Obsidian's typings stop relying on it (TS 7
+		// drops the option, and typescript-eslint doesn't support TS 7 yet anyway).
+		"esModuleInterop": false,
 		"allowSyntheticDefaultImports": true,
-		"useUnknownInCatchVariables": true,
-		"lib": [
-			"DOM",
-			"ES5",
-			"ES6",
-			"ES7"
-		]
+		"ignoreDeprecations": "6.0",
+		// Plugin code runs in Obsidian (desktop and mobile), not Node, so no Node globals
+		"types": [],
+		"strict": true,
+		"noImplicitReturns": true,
+		"noUncheckedIndexedAccess": true
 	},
-	"include": [
-		"src/**/*.ts"
-	]
+	"include": ["src/**/*.ts"]
 }

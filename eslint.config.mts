@@ -1,9 +1,9 @@
-import tseslint from 'typescript-eslint';
+/// <reference types="node" />
 import obsidianmd from "eslint-plugin-obsidianmd";
 import globals from "globals";
-import { globalIgnores } from "eslint/config";
+import { defineConfig, globalIgnores } from "eslint/config";
 
-export default tseslint.config(
+export default defineConfig(
 	{
 		languageOptions: {
 			globals: {
@@ -12,7 +12,7 @@ export default tseslint.config(
 			parserOptions: {
 				projectService: {
 					allowDefaultProject: [
-						'eslint.config.js',
+						'eslint.config.mts',
 						'manifest.json'
 					]
 				},
@@ -27,7 +27,6 @@ export default tseslint.config(
 		"dist",
 		"esbuild.config.mjs",
 		"scripts",
-		"eslint.config.js",
 		"version-bump.mjs",
 		"versions.json",
 		"main.js",
