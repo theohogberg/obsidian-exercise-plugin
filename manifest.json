@@ -1,7 +1,7 @@
 {
 	"id": "gym-plugin",
 	"name": "Gym",
-	"version": "0.2.5",
+	"version": "0.3.0",
 	"minAppVersion": "1.7.2",
 	"description": "Build workout programmes, log sets with last time's weights prefilled, and save sessions as notes.",
 	"author": "Adam Theodor",
