@@ -1,24 +1,35 @@
-1. Build it
-npm run dev
-This starts watch mode — it compiles src/ and outputs main.js whenever you save.
+# How to run the plugin locally
 
-2. Load it in Obsidian
+Requires Node 22 or newer (24 recommended, see `.nvmrc`) and Obsidian 1.7.2 or newer.
 
-You need to copy the plugin files into an Obsidian vault:
-# Create the plugin folder in your vault (replace the path with your actual vault)
-mkdir -p "/path/to/your/vault/.obsidian/plugins/gym-plugin"
+## 1. Build
 
-# Copy the built files
-cp main.js manifest.json styles.css "/path/to/your/vault/.obsidian/plugins/gym-plugin/"
+```bash
+npm install
+npm run dev     # watch mode: rebuilds main.js whenever a file in src/ changes
+```
 
-Then in Obsidian:
-    - Go to Settings → Community Plugins → turn off Restricted Mode (if not already done)
-    - Click Reload plugins (or restart Obsidian)
-    - Find "Gym Plugin" in the list and enable it
+Use `npm run build` instead for a one-off production build.
 
-    For active development, a cleaner approach is to symlink the build output directly into the vault so you don't have to copy files on every change:
-    ln -s "$(pwd)" "/path/to/your/vault/.obsidian/plugins/gym-plugin"
+## 2. Install into a vault
 
-    Then after each save, just run "Reload app without saving" in Obsidian (Cmd+R on Mac, or via the command palette).
+Copy the built files into the vault's plugin folder (replace the vault path):
 
-    Do you have an Obsidian vault path you want to use?
+```bash
+mkdir -p "/path/to/vault/.obsidian/plugins/gym-plugin"
+cp main.js manifest.json styles.css "/path/to/vault/.obsidian/plugins/gym-plugin/"
+```
+
+Or, while developing, symlink the repository so every rebuild is picked up without copying:
+
+```bash
+ln -s "$(pwd)" "/path/to/vault/.obsidian/plugins/gym-plugin"
+```
+
+## 3. Enable it in Obsidian
+
+1. Open **Settings → Community plugins** and turn off **Restricted mode** if it's on.
+2. Reload the list of installed plugins (or restart Obsidian).
+3. Enable **Gym**.
+
+After a rebuild, switch the plugin off and on again, or run **Reload app without saving** from the command palette (Cmd+R on macOS).
