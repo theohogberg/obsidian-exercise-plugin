@@ -1,9 +1,11 @@
 # Obsidian community plugin
 
+> This repository is the **Gym** plugin. This file is general Obsidian plugin guidance; the project specifics (domain model, architecture, data storage, versioning, lint gotchas) are in [`CLAUDE.md`](CLAUDE.md), which takes precedence where the two differ.
+
 ## Project overview
 
 - Target: Obsidian Community Plugin (TypeScript → bundled JavaScript).
-- Entry point: `main.ts` compiled to `main.js` and loaded by Obsidian.
+- Entry point: `src/main.ts` compiled to `main.js` and loaded by Obsidian.
 - Required release artifacts: `main.js`, `manifest.json`, and optional `styles.css`.
 
 ## Environment & tooling
@@ -35,10 +37,8 @@ npm run build
 
 ## Linting
 
-- To use eslint install eslint from terminal: `npm install -g eslint`
-- To use eslint to analyze this project use this command: `eslint main.ts`
-- eslint will then create a report with suggestions for code improvement by file and line number.
-- If your source code is in a folder, such as `src`, you can use eslint with this command to analyze all files in that folder: `eslint ./src/`
+- Run `npm run lint`. ESLint is a dev dependency (no global install needed), configured in `eslint.config.mts` with `eslint-plugin-obsidianmd`'s recommended rules.
+- CI runs it on every push; it must pass. See "Lint gotchas" in `CLAUDE.md` for rules that are easy to trip over.
 
 ## File & folder conventions
 
@@ -60,7 +60,7 @@ npm run build
       constants.ts
     types.ts         # TypeScript interfaces and types
   ```
-- **Do not commit build artifacts**: Never commit `node_modules/`, `main.js`, or other generated files to version control.
+- **Do not commit build artifacts**: Never commit `node_modules/` or `main.js`. One deliberate exception: `src/defaultExercises.ts` is generated from `assets/exercises/` by `npm run exercises` but committed, and `npm run build` fails if it's out of date.
 - Keep the plugin small. Avoid large dependencies. Prefer browser-compatible packages.
 - Generated output should be placed at the plugin root or `dist/` depending on your build setup. Release artifacts must end up at the top level of the plugin folder in the vault (`main.js`, `manifest.json`, `styles.css`).
 
@@ -95,7 +95,7 @@ npm run build
 
 ## Versioning & releases
 
-- Bump `version` in `manifest.json` (SemVer) and update `versions.json` to map plugin version → minimum app version.
+- Bump `version` with `npm version patch|minor` (SemVer; see "Versioning" in `CLAUDE.md` for when to bump). `versions.json` maps plugin version → minimum app version; `version-bump.mjs` adds an entry only when `minAppVersion` changes.
 - Create a GitHub release whose tag exactly matches `manifest.json`'s `version`. Do not use a leading `v`.
 - Attach `manifest.json`, `main.js`, and `styles.css` (if present) to the release as individual assets.
 - After the initial release, follow the process to add/update your plugin in the community catalog as required.
