@@ -97,16 +97,31 @@ npm install
 npm run dev      # esbuild watch mode
 npm run build    # tsc type-check + production build
 npm run lint     # eslint with eslint-plugin-obsidianmd
+npm test         # type-check tests (tsc -p tests) + vitest
 npm run exercises # regenerate src/defaultExercises.ts from assets/exercises/*/README.md
 ```
 
-Node 24 and npm are installed locally (Homebrew), so use the npm scripts above. Bun (`/opt/homebrew/bin/bun`) is also installed: it runs ad-hoc logic tests (`bun test`, see below) and can run the same tools if npm is ever unavailable: `bun node_modules/typescript/bin/tsc`, `bun node_modules/eslint/bin/eslint.js .`, `bun esbuild.config.mjs production`.
+Node 24 and npm are installed locally (Homebrew), so use the npm scripts above. Bun (`/opt/homebrew/bin/bun`) is also installed and can run the same tools if npm is ever unavailable: `bun node_modules/typescript/bin/tsc`, `bun node_modules/eslint/bin/eslint.js .`, `bun esbuild.config.mjs production`.
 
-CI (`.github/workflows/lint.yml`) runs build and lint on Node 22, 24 and 26; all must pass. `.nvmrc` pins local development to Node 24 (the current LTS). Keep the CI matrix to supported release lines: drop a version when it reaches end of life and add the new even-numbered release once it is out (schedule: https://github.com/nodejs/release#release-schedule). There is no test suite in the repo; logic in `store.ts`, `session.ts` and `sessionNote.ts` doesn't touch the DOM and can be tested with `bun test` by mocking the `obsidian` module (`moment`, `normalizePath`, `Notice`).
+CI (`.github/workflows/lint.yml`) runs build, lint and tests on Node 22, 24 and 26; all must pass. `.nvmrc` pins local development to Node 24 (the current LTS). Keep the CI matrix to supported release lines: drop a version when it reaches end of life and add the new even-numbered release once it is out (schedule: https://github.com/nodejs/release#release-schedule).
+
+### Tests
+
+Vitest, in `tests/`. Run `npm test` after any change to `src/`, and add or update tests with behaviour changes.
+
+- `tests/stubs/obsidian.ts` stands in for the `obsidian` module (aliased in `vitest.config.ts`): real `moment`, `normalizePath`, a recording `Notice`, a programmable `requestUrl` (`setRequestUrlHandler`), Obsidian's DOM helpers (`createEl`, `createDiv`, `empty`, `toggleClass`…), and `ItemView`/`Modal`/`Setting`/… that produce Obsidian's markup. Import its test-only exports (`notices`, `openModals`, `setRequestUrlHandler`) from `./stubs/obsidian`, not `obsidian`, so they type-check.
+- `tests/helpers.ts`: `fakeApp()` (in-memory vault behind the adapter API), `testSettings()`, `legacyData` (pre-v2 file), `flush()`.
+- Logic tests (`store`, `session`, `sessionNote`, `mediaCache`, `defaultExercises`) run in Node. `rendering.test.ts` uses happy-dom (`// @vitest-environment happy-dom`) to render the real views and check the structure the CSS relies on, e.g. every table row has as many cells as its header.
+- `tests/tsconfig.json` type-checks tests with the source (Node types allowed there). ESLint relaxes the plugin-runtime rules (Node modules, window timers, createEl, direct moment import) for `tests/**` only.
+- Visual checks aren't automated: they need Obsidian's own `app.css` (inside the app's `.asar`), so render the views with the stub, wrap them in Obsidian's markup and screenshot locally (Quick Look) when changing layout.
 
 ## Versioning
 
-The plugin follows [semantic versioning](https://semver.org). From version 0.2.2 on, **every change pushed to `main` gets a version bump**, chosen by what the change does for users. Exception: changes that only touch `CLAUDE.md` or `AGENTS.md` are not version updates; push them without a bump.
+The plugin follows [semantic versioning](https://semver.org). The version describes **what Obsidian installs**: `main.js`, `manifest.json` and `styles.css`. Bump it only when a push changes one of those, and choose the bump by what the change does for users.
+
+**No bump** when the shipped plugin is unchanged: tests, CI, dev dependencies and tooling config (TypeScript, ESLint, Vitest), docs (`CLAUDE.md`, `AGENTS.md`, `README.md`, `HOW-TO-RUN.md`, `docs/`), and anything else that doesn't reach those three files. Push these without a version change or tag.
+
+How to tell: if `src/`, `styles.css`, `manifest.json` or `esbuild.config.mjs` changed since the last tag (`git diff --stat $(git describe --tags --abbrev=0) -- src styles.css manifest.json esbuild.config.mjs`), it's a plugin change. Changing `assets/exercises/` counts too, because it regenerates `src/defaultExercises.ts`. After upgrading build tools (esbuild, the `obsidian` types), also build and compare `main.js` with the last release (the copy in the user's vault); a byte-identical build means no bump.
 
 | Bump | When | Examples |
 |---|---|---|
@@ -114,7 +129,7 @@ The plugin follows [semantic versioning](https://semver.org). From version 0.2.2
 | **Minor** (0.2.2 → 0.3.0) | New features, and anything breaking: data format changes that need a migration, changed session-note format, removed or renamed commands or settings | Rest timer, default exercises, moving image URLs |
 | **Major** | Stays `0` until the user decides the plugin is 1.0. Don't bump it on your own. | |
 
-While the major version is 0, breaking changes bump the minor version. If a push contains several changes, use the largest bump that applies, once.
+While the major version is 0, breaking changes bump the minor version. If a push contains several plugin changes, use the largest bump that applies, once. (0.2.3–0.2.5 were bumped under an earlier, broader rule for docs, CI and type-only changes; they stay in the history.)
 
 How to bump, after the work itself is committed:
 
