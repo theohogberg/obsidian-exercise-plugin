@@ -1,0 +1,6 @@
+#!/bin/sh
+# Runs the tests before every `git push`; a failing test stops the push.
+# Enabled by `npm install` (the "prepare" script sets core.hooksPath to .githooks).
+# Skip once with `git push --no-verify`.
+echo "pre-push: running npm test"
+npm test
