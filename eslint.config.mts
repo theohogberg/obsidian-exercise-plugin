@@ -43,7 +43,6 @@ export default defineConfig(
 	},
 	globalIgnores([
 		"node_modules",
-		"dist",
 		"esbuild.config.mjs",
 		"scripts",
 		"version-bump.mjs",

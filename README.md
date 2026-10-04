@@ -58,12 +58,14 @@ The default exercises' photos are hosted in this repository (`assets/exercises/`
 
 ## Development
 
+Requires Node 22 or newer (24 recommended, see `.nvmrc`). The plugin needs Obsidian 1.7.2 or newer.
+
 ```bash
 npm install
 npm run dev     # watch mode
 npm run build   # type-check + production build
 npm run lint
-npm test            # type-check and run the tests (Vitest)
+npm test            # type-check and run the tests (Vitest); also runs before every git push
 npm run exercises   # regenerate src/defaultExercises.ts from assets/exercises
 ```
 
@@ -71,4 +73,14 @@ npm run exercises   # regenerate src/defaultExercises.ts from assets/exercises
 
 Each default exercise is a folder in [`assets/exercises/`](assets/exercises/) with a `README.md` (front matter, then Cues, Setup and numbered Steps) and its photos. To change one, or add a new one, edit or add a folder and run `npm run exercises`; don't edit `src/defaultExercises.ts` by hand. `npm run build` fails if the generated file is out of date. Photos are from the public-domain [free-exercise-db](https://github.com/yuhonas/free-exercise-db); names, cues and instructions are our own.
 
-Copy (or symlink the repo) `main.js`, `manifest.json` and `styles.css` into `<vault>/.obsidian/plugins/gym-plugin/`, then reload Obsidian. See `HOW-TO-RUN.md`.
+### Running it in a vault
+
+Copy the built files into the vault's plugin folder, or symlink the repository there so every rebuild is picked up:
+
+```bash
+mkdir -p "/path/to/vault/.obsidian/plugins/gym-plugin"
+cp main.js manifest.json styles.css "/path/to/vault/.obsidian/plugins/gym-plugin/"
+# or: ln -s "$(pwd)" "/path/to/vault/.obsidian/plugins/gym-plugin"
+```
+
+Then in Obsidian open **Settings → Community plugins**, turn off **Restricted mode** if it's on, reload the list of installed plugins and enable **Gym**. After a rebuild, switch the plugin off and on again, or run **Reload app without saving** (Cmd+R on macOS).

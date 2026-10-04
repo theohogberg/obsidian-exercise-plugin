@@ -1,6 +1,6 @@
 # Obsidian Gym Plugin
 
-An Obsidian plugin for logging gym workouts, modelled on the iPhone app RepCount. Plugin id `gym-plugin` (see `manifest.json`). `AGENTS.md` is a general Obsidian plugin guide; this file describes the actual project. The design rationale is in `docs/redesign-plan.md`.
+An Obsidian plugin for logging gym workouts, modelled on the iPhone app RepCount. Plugin id `gym-plugin` (see `manifest.json`). `AGENTS.md` is a general Obsidian plugin guide; this file describes the actual project.
 
 ## Domain terms (use these in code and UI)
 
@@ -109,6 +109,8 @@ CI (`.github/workflows/lint.yml`) runs build, lint and tests on Node 22, 24 and 
 
 Vitest, in `tests/`. Run `npm test` after any change to `src/`, and add or update tests with behaviour changes.
 
+- **Pre-push hook**: `.githooks/pre-push` runs `npm test` before every `git push` and blocks the push if a test fails. `npm install` enables it (the `prepare` script sets `core.hooksPath` to `.githooks`). Don't bypass it with `--no-verify`; fix the failure instead, unless the user asks.
+
 - `tests/stubs/obsidian.ts` stands in for the `obsidian` module (aliased in `vitest.config.ts`): real `moment`, `normalizePath`, a recording `Notice`, a programmable `requestUrl` (`setRequestUrlHandler`), Obsidian's DOM helpers (`createEl`, `createDiv`, `empty`, `toggleClass`…), and `ItemView`/`Modal`/`Setting`/… that produce Obsidian's markup. Import its test-only exports (`notices`, `openModals`, `setRequestUrlHandler`) from `./stubs/obsidian`, not `obsidian`, so they type-check.
 - `tests/helpers.ts`: `fakeApp()` (in-memory vault behind the adapter API), `testSettings()`, `legacyData` (pre-v2 file), `flush()`.
 - Logic tests (`store`, `session`, `sessionNote`, `mediaCache`, `defaultExercises`) run in Node. `rendering.test.ts` uses happy-dom (`// @vitest-environment happy-dom`) to render the real views and check the structure the CSS relies on, e.g. every table row has as many cells as its header.
@@ -119,7 +121,7 @@ Vitest, in `tests/`. Run `npm test` after any change to `src/`, and add or updat
 
 The plugin follows [semantic versioning](https://semver.org). The version describes **what Obsidian installs**: `main.js`, `manifest.json` and `styles.css`. Bump it only when a push changes one of those, and choose the bump by what the change does for users.
 
-**No bump** when the shipped plugin is unchanged: tests, CI, dev dependencies and tooling config (TypeScript, ESLint, Vitest), docs (`CLAUDE.md`, `AGENTS.md`, `README.md`, `HOW-TO-RUN.md`, `docs/`), and anything else that doesn't reach those three files. Push these without a version change or tag.
+**No bump** when the shipped plugin is unchanged: tests, CI, dev dependencies and tooling config (TypeScript, ESLint, Vitest), docs (`CLAUDE.md`, `AGENTS.md`, `README.md`), and anything else that doesn't reach those three files. Push these without a version change or tag.
 
 How to tell: if `src/`, `styles.css`, `manifest.json` or `esbuild.config.mjs` changed since the last tag (`git diff --stat $(git describe --tags --abbrev=0) -- src styles.css manifest.json esbuild.config.mjs`), it's a plugin change. Changing `assets/exercises/` counts too, because it regenerates `src/defaultExercises.ts`. After upgrading build tools (esbuild, the `obsidian` types), also build and compare `main.js` with the last release (the copy in the user's vault); a byte-identical build means no bump.
 
@@ -133,7 +135,7 @@ While the major version is 0, breaking changes bump the minor version. If a push
 
 How to bump, after the work itself is committed:
 
-- `npm version patch` (or `minor`). This updates `package.json` and `package-lock.json`, runs `version-bump.mjs` (sets `manifest.json`'s version and adds a `versions.json` entry only when `minAppVersion` changed), then commits and tags. `.npmrc` sets an empty tag prefix, so the tag is `0.2.3`, not `v0.2.3`, as Obsidian releases require. The working tree must be clean first. npm's commit message is just the version (e.g. `0.2.5`), and `version-bump.mjs` drops the final newline from `manifest.json`; both are expected.
+- `npm version patch` (or `minor`). This updates `package.json` and `package-lock.json`, runs `version-bump.mjs` (sets `manifest.json`'s version and adds a `versions.json` entry only when `minAppVersion` changed), then commits and tags. `.npmrc` sets an empty tag prefix, so the tag is `0.2.3`, not `v0.2.3`, as Obsidian releases require. The working tree must be clean first. npm's commit message is just the version (e.g. `0.2.5`); that's expected.
 - Without npm, make the same edits by hand: `version` in `manifest.json`, `package.json`, and both places in `package-lock.json`; a `versions.json` entry only if `minAppVersion` changed. Then commit as "Bump version to x.y.z" and tag it with an **annotated** tag: `git tag -a x.y.z -m x.y.z`.
 - Push with `git push origin main --follow-tags` so the tag goes too. `--follow-tags` skips lightweight tags (plain `git tag x.y.z`), so check with `git ls-remote --tags origin`.
 - Copy the new `manifest.json` into the user's vault along with `main.js` and `styles.css`.
