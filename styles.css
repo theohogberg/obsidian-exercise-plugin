@@ -151,6 +151,17 @@ button.gym-link-btn:hover {
   color: var(--text-muted);
 }
 
+/* Same weight as the Finish button (mod-cta): some themes make mod-warning very dark */
+button.gym-discard {
+  background-color: var(--color-red);
+  color: var(--text-on-accent);
+}
+
+button.gym-discard:hover {
+  background-color: var(--color-red);
+  filter: brightness(1.1);
+}
+
 button.gym-add-set {
   margin-top: 4px;
 }

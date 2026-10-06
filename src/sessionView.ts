@@ -175,7 +175,7 @@ export class SessionView extends ItemView {
     const actions = el.createDiv('gym-action-row');
     const finishBtn = actions.createEl('button', { text: 'Finish workout', cls: 'mod-cta' });
     finishBtn.addEventListener('click', () => { void this.finish(session); });
-    const discardBtn = actions.createEl('button', { text: 'Discard', cls: 'mod-warning' });
+    const discardBtn = actions.createEl('button', { text: 'Discard', cls: 'gym-discard' });
     discardBtn.addEventListener('click', () => { void this.discard(); });
 
     el.scrollTop = scrollTop;
