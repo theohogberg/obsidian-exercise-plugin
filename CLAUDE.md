@@ -1,6 +1,6 @@
 # Obsidian Gym Plugin
 
-An Obsidian plugin for logging gym workouts, modelled on the iPhone app RepCount. Plugin id `gym-plugin` (see `manifest.json`). `AGENTS.md` is a general Obsidian plugin guide; this file describes the actual project.
+An Obsidian plugin for logging gym workouts, modelled on the iPhone app RepCount. Plugin id `gym` (see `manifest.json`; never change it once released, and Obsidian rejects ids containing `obsidian` or ending in `plugin`). `AGENTS.md` is a general Obsidian plugin guide; this file describes the actual project.
 
 ## Domain terms (use these in code and UI)
 
@@ -81,17 +81,17 @@ scripts/build-exercises.mjs # generates src/defaultExercises.ts
 - UI is built with `Setting` plus `createEl`/`createDiv`; icon buttons via `setIcon`. New CSS classes use the `gym-` prefix.
 - Tables (`.gym-sets`, `.gym-programme-list`) are a single CSS grid with rows as `display: contents`, so header and rows share columns. Don't give a row its own grid, and don't set `font-size` on a row: the column widths are in `em`. Modal forms get the `gym-form` class for equal control widths.
 - Dates: use `moment` imported from `obsidian` (local time), never `toISOString()` (UTC, wrong day near midnight). IDs come from `crypto.randomUUID()`.
-- Command ids are stable for users' hotkeys: `gym-new-session` is now "Open workouts". Programmes are started from the Workouts tab or the library, not a picker.
+- Command ids don't repeat the plugin id (Obsidian prefixes it: `gym:open-workouts`). Once released, keep them stable, since users' hotkeys are bound to them. Programmes are started from the Workouts tab or the library, not a picker.
 
 ## Commands
 
 | Command | id |
 |---|---|
-| Open workouts (also the dumbbell ribbon icon, labelled "Workouts") | `gym-new-session` |
-| Start empty session | `gym-start-empty-session` |
-| Manage programmes and exercises | `gym-manage-exercises` |
-| Add default exercises | `gym-add-default-exercises` |
-| Download exercise images for offline use | `gym-download-images` |
+| Open workouts (also the dumbbell ribbon icon, labelled "Workouts") | `open-workouts` |
+| Start empty session | `start-empty-session` |
+| Manage programmes and exercises | `manage-exercises` |
+| Add default exercises | `add-default-exercises` |
+| Download exercise images for offline use | `download-images` |
 
 ## Development
 
@@ -174,4 +174,4 @@ How to bump, after the work itself is committed:
 - Offline copies of exercise images: `<vault>/.gym/media/`
 - Legacy (pre-v2, kept as backup): `<vault>/.gym/exercises.json`
 - Session notes: settings folder, default `Gym/Sessions/`
-- Plugin settings: `plugin.saveData()`, stored in `<vault>/.obsidian/plugins/gym-plugin/data.json`
+- Plugin settings: `plugin.saveData()`, stored in `<vault>/.obsidian/plugins/gym/data.json`

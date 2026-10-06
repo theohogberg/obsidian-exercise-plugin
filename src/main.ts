@@ -21,33 +21,32 @@ export default class GymPlugin extends Plugin {
 
     this.addRibbonIcon('dumbbell', 'Workouts', () => { void this.openSessionView(); });
 
-    // Keeps the old "New session" id so existing hotkeys still work
     this.addCommand({
-      id: 'gym-new-session',
+      id: 'open-workouts',
       name: 'Open workouts',
       callback: () => { void this.openSessionView(); },
     });
 
     this.addCommand({
-      id: 'gym-start-empty-session',
+      id: 'start-empty-session',
       name: 'Start empty session',
       callback: () => { void this.startSession(null); },
     });
 
     this.addCommand({
-      id: 'gym-manage-exercises',
+      id: 'manage-exercises',
       name: 'Manage programmes and exercises',
       callback: () => new LibraryModal(this.app, this).open(),
     });
 
     this.addCommand({
-      id: 'gym-add-default-exercises',
+      id: 'add-default-exercises',
       name: 'Add default exercises',
       callback: () => { void this.addDefaultExercises(); },
     });
 
     this.addCommand({
-      id: 'gym-download-images',
+      id: 'download-images',
       name: 'Download exercise images for offline use',
       callback: () => { void this.downloadExerciseImages(this.store.getExercises()); },
     });
