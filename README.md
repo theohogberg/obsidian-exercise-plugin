@@ -28,6 +28,8 @@ Vaults created before default exercises existed get them added once, automatical
 ```markdown
 ---
 date: 2026-10-04
+start: 2026-10-04T09:30
+end: 2026-10-04T10:45
 type: workout
 programme: "Push day"
 muscles: [chest, triceps]

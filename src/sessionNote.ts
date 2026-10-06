@@ -8,6 +8,8 @@ const UNSAFE_FILENAME_CHARS = /[\\/:*?"<>|#^[\]]/g;
 
 export function buildSessionNote(store: GymStore, settings: GymPluginSettings, session: Session): string {
   const date = moment(session.startedAt).format('YYYY-MM-DD');
+  // Obsidian shows YYYY-MM-DDTHH:mm as a "Date & time" property
+  const dateTime = (iso: string) => moment(iso).format('YYYY-MM-DDTHH:mm');
   const unit = settings.weightUnit;
   const title = session.programmeName || 'Workout';
   const performed = session.exercises.filter(ex => ex.sets.length > 0);
@@ -18,6 +20,8 @@ export function buildSessionNote(store: GymStore, settings: GymPluginSettings, s
   const lines = [
     '---',
     `date: ${date}`,
+    `start: ${dateTime(session.startedAt)}`,
+    `end: ${dateTime(session.finishedAt ?? moment().format())}`,
     'type: workout',
   ];
   if (session.programmeName) lines.push(`programme: ${JSON.stringify(session.programmeName)}`);

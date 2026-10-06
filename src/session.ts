@@ -60,6 +60,7 @@ export function performedSets(ex: SessionExercise): LoggedSet[] {
  * programme's Sets/Reps to what was just done, and clear the active session.
  */
 export async function finishSession(app: App, store: GymStore, settings: GymPluginSettings, session: Session): Promise<TFile> {
+  session.finishedAt = moment().format();
   const file = await writeSessionNote(app, store, settings, session);
   const date = moment(session.startedAt).format('YYYY-MM-DD');
 

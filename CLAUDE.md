@@ -21,11 +21,13 @@ An Obsidian plugin for logging gym workouts, modelled on the iPhone app RepCount
 
 ## Session note format
 
-Folder from settings (default `Gym/Sessions`), filename `YYYY-MM-DD <programme name>.md` (`workout` for empty sessions; characters Obsidian forbids are stripped; ` 1`, ` 2`… on collisions). Set lines use a fixed `<weight><unit> × <reps>` format so they can be parsed back later.
+Folder from settings (default `Gym/Sessions`), filename `YYYY-MM-DD <programme name>.md` (`workout` for empty sessions; characters Obsidian forbids are stripped; ` 1`, ` 2`… on collisions). Set lines use a fixed `<weight><unit> × <reps>` format so they can be parsed back later. `start`/`end` are local `YYYY-MM-DDTHH:mm`, which Obsidian shows as Date & time properties; `end` is when Finish was pressed (`session.finishedAt`).
 
 ```markdown
 ---
 date: 2026-10-04
+start: 2026-10-04T09:30
+end: 2026-10-04T10:45
 type: workout
 programme: "Push day"
 muscles: [chest, triceps]

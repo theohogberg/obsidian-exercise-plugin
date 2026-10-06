@@ -51,6 +51,7 @@ export interface SessionExercise {
 export interface Session {
   id: string;
   startedAt: string;              // ISO timestamp
+  finishedAt?: string;            // ISO timestamp, set when the session is finished
   programmeId: string | null;     // null = empty session
   programmeName: string;
   exercises: SessionExercise[];

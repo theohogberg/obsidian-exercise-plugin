@@ -20,7 +20,9 @@ describe('session note', () => {
       { exerciseId: 'default-lateral-raise', sets: 1, reps: 15 },
     ] };
     const session = createSession(store, programme, 'exercise');
-    session.startedAt = '2026-10-04T09:30:00+02:00';
+    // Local times, so the clock reads the same in any time zone (CI runs in UTC)
+    session.startedAt = new Date(2026, 9, 4, 9, 30).toISOString();
+    session.finishedAt = new Date(2026, 9, 4, 10, 45).toISOString();
     session.exercises[0]!.sets = [{ weight: 85, reps: 6 }, { weight: 82.5, reps: 7 }];
     session.exercises[0]!.notes = 'Felt heavy\nSleep was bad';
     session.exercises[1]!.sets = [{ weight: 30, reps: 12 }];
@@ -30,6 +32,8 @@ describe('session note', () => {
     expect(buildSessionNote(store, testSettings(), session)).toBe([
       '---',
       'date: 2026-10-04',
+      'start: 2026-10-04T09:30',
+      'end: 2026-10-04T10:45',
       'type: workout',
       'programme: "Push day"',
       'muscles: [chest, triceps]',
