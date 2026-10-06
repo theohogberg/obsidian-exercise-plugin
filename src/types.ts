@@ -41,14 +41,10 @@ export interface LoggedSet {
   reps: number;
 }
 
-export interface SetLog extends LoggedSet {
-  done: boolean;
-}
-
 export interface SessionExercise {
   exerciseId: string;
   name: string;                   // copied so a session survives the exercise being deleted
-  sets: SetLog[];
+  sets: LoggedSet[];           // every row is saved when the session finishes
   notes: string;
 }
 

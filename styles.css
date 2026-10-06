@@ -151,7 +151,7 @@ button.gym-link-btn:hover {
 
 .gym-sets {
   display: grid;
-  grid-template-columns: 2.5em minmax(0, 1fr) minmax(0, 1fr) 3.5em 2.5em;
+  grid-template-columns: 2.5em minmax(0, 1fr) minmax(0, 1fr) 2.5em;
   column-gap: 8px;
   row-gap: 6px;
   align-items: center;
@@ -162,14 +162,9 @@ button.gym-link-btn:hover {
   display: contents;
 }
 
-.gym-set-row input[type="checkbox"],
 .gym-set-row .clickable-icon {
   justify-self: center;
   margin: 0;
-}
-
-.gym-set-row.is-done input[type="number"] {
-  background: var(--background-modifier-success);
 }
 
 .gym-set-index {
@@ -212,7 +207,8 @@ button.gym-link-btn:hover {
   white-space: nowrap;
 }
 
-/* Rest timer */
+/* Rest timer: sticky at the top of the workout. Idle it's one large button; running
+   it's an accent bar with the countdown, -15s/+15s and Skip. */
 
 .gym-rest-timer {
   position: sticky;
@@ -221,15 +217,31 @@ button.gym-link-btn:hover {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
   margin-bottom: 12px;
+  padding: 4px 0;
+  background: var(--background-primary);
+}
+
+.gym-rest-timer.is-running {
+  padding: 8px 12px;
   border-radius: 8px;
   background: var(--interactive-accent);
   color: var(--text-on-accent);
 }
 
-.gym-rest-timer.is-hidden {
-  display: none;
+button.gym-rest-start {
+  flex: 1;
+  height: auto;
+  padding: 10px 14px;
+  gap: 8px;
+  font-size: 1.05em;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+button.gym-rest-start .svg-icon {
+  width: 20px;
+  height: 20px;
 }
 
 .gym-rest-time {

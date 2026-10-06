@@ -1,6 +1,6 @@
 # Gym
 
-An Obsidian plugin for logging gym workouts. Build **programmes** from your **exercises**, start one, and every exercise is already filled in with what you lifted last time. Tick off sets as you go, and the finished **session** is saved as a note in your vault.
+An Obsidian plugin for logging gym workouts. Build **programmes** from your **exercises**, start one, and every exercise is already filled in with what you lifted last time. Adjust the sets as you go, and the finished **session** is saved as a note in your vault.
 
 Inspired by [RepCount](https://apps.apple.com/us/app/repcount-gym-workout-tracker/id594982044).
 
@@ -11,8 +11,10 @@ Inspired by [RepCount](https://apps.apple.com/us/app/repcount-gym-workout-tracke
    - **Start session**: choose a programme (with when you last did it) and press Start. Each exercise's sets are prefilled with the weight and reps from last time.
    - **Start empty session**: add exercises as you go.
    - **Design programme**: create a template for a session: exercises in order, with sets and reps.
-3. During the workout: edit weight and reps per set, tick sets off (this starts the timer between sets), add or remove sets and exercises, and write notes. Progress is saved continuously, so closing Obsidian doesn't lose the workout.
-4. **Finish workout**: ticked-off sets are written to a note like `Gym/Sessions/2026-10-04 Push day.md`, and become "last time" for next time. The programme's Sets and Reps update to what you did.
+3. During the workout: edit weight and reps per set, add or remove sets and exercises, and write notes. Tap **Rest** at the top (it stays in view while you scroll) to start the timer between sets; when it's up you get a beep, a banner, a vibration on Android, and a system notification on desktop. Progress is saved continuously, so closing Obsidian doesn't lose the workout.
+
+   On a phone the rest alert needs Obsidian open with the screen on: an Obsidian plugin can't send real phone notifications, and the phone pauses Obsidian in the background. The beep is muted when the phone is on silent.
+4. **Finish workout**: every set row is written to a note like `Gym/Sessions/2026-10-04 Push day.md`, and become "last time" for next time. The programme's Sets and Reps update to what you did.
 
 ### Exercise info
 
@@ -46,7 +48,7 @@ muscles: [chest, triceps]
 - Weight unit (kg / lbs)
 - Open the note after finishing
 - Prefill from: the last time the exercise was done anywhere, or the last time it was done in this programme
-- Timer between sets: on/off and length
+- Timer between sets: show or hide the Rest button, and its length
 
 ## Data
 

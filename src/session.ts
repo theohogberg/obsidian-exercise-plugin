@@ -33,8 +33,8 @@ export function buildSessionExercise(
 ): SessionExercise {
   const last = store.getLastLog(exercise.id, programmeId, prefillFrom);
   const sets = last && last.sets.length > 0
-    ? last.sets.map(s => ({ weight: s.weight, reps: s.reps, done: false }))
-    : Array.from({ length: fallback.sets }, () => ({ weight: 0, reps: fallback.reps, done: false }));
+    ? last.sets.map(s => ({ weight: s.weight, reps: s.reps }))
+    : Array.from({ length: fallback.sets }, () => ({ weight: 0, reps: fallback.reps }));
   return { exerciseId: exercise.id, name: exercise.name, sets, notes: '' };
 }
 
@@ -55,8 +55,9 @@ export function createSession(store: GymStore, programme: Programme | null, pref
   };
 }
 
-export function doneSets(ex: SessionExercise): LoggedSet[] {
-  return ex.sets.filter(s => s.done).map(s => ({ weight: s.weight, reps: s.reps }));
+/** The sets to record: every row, as entered (copied, so extra fields from older saved sessions are dropped). */
+export function performedSets(ex: SessionExercise): LoggedSet[] {
+  return ex.sets.map(s => ({ weight: s.weight, reps: s.reps }));
 }
 
 /**
@@ -68,7 +69,7 @@ export async function finishSession(app: App, store: GymStore, settings: GymPlug
   const date = moment(session.startedAt).format('YYYY-MM-DD');
 
   for (const ex of session.exercises) {
-    const sets = doneSets(ex);
+    const sets = performedSets(ex);
     if (sets.length === 0 || !store.getExercise(ex.exerciseId)) continue;
     store.addLog(ex.exerciseId, {
       date,
@@ -83,7 +84,7 @@ export async function finishSession(app: App, store: GymStore, settings: GymPlug
   if (programme) {
     for (const pe of programme.exercises) {
       const performed = session.exercises.find(e => e.exerciseId === pe.exerciseId);
-      const values = performed && programmeValuesFrom(doneSets(performed));
+      const values = performed && programmeValuesFrom(performedSets(performed));
       if (values) {
         pe.sets = values.sets;
         pe.reps = values.reps;

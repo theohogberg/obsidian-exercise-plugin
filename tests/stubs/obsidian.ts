@@ -26,6 +26,9 @@ export async function requestUrl(req: { url: string } | string) {
 
 export class TFile { constructor(public path: string) {} }
 
+/** Which app is running. Tests may change these flags. */
+export const Platform = { isDesktopApp: false, isMobile: false, isPhone: false };
+
 // ---------------------------------------------------------------------------
 // DOM helpers Obsidian adds to every element (only when a DOM is present)
 

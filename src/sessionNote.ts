@@ -10,7 +10,7 @@ export function buildSessionNote(store: GymStore, settings: GymPluginSettings, s
   const date = moment(session.startedAt).format('YYYY-MM-DD');
   const unit = settings.weightUnit;
   const title = session.programmeName || 'Workout';
-  const performed = session.exercises.filter(ex => ex.sets.some(s => s.done));
+  const performed = session.exercises.filter(ex => ex.sets.length > 0);
   const muscles = [...new Set(performed
     .map(ex => store.getExercise(ex.exerciseId)?.muscleGroup)
     .filter((m): m is NonNullable<typeof m> => !!m))];
@@ -26,7 +26,7 @@ export function buildSessionNote(store: GymStore, settings: GymPluginSettings, s
   for (const ex of performed) {
     lines.push(`## ${ex.name}`);
     // Fixed "<weight><unit> × <reps>" format so set lines can be parsed back later
-    ex.sets.filter(s => s.done).forEach(s => lines.push(`- ${s.weight}${unit} × ${s.reps}`));
+    ex.sets.forEach(s => lines.push(`- ${s.weight}${unit} × ${s.reps}`));
     if (ex.notes.trim()) lines.push('', `> ${ex.notes.trim().replace(/\n/g, '\n> ')}`);
     lines.push('');
   }

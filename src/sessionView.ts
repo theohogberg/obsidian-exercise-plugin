@@ -4,6 +4,7 @@ import { ExercisePickerModal, confirmAction } from './pickers';
 import { ExerciseInfoModal } from './exerciseInfoModal';
 import { ProgrammeEditorModal } from './programmeModal';
 import { buildSessionExercise, finishSession, summariseSets } from './session';
+import { primeRestAlert, restOverAlert } from './restAlert';
 import { Session, SessionExercise } from './types';
 
 export const VIEW_TYPE_SESSION = 'gym-session';
@@ -21,7 +22,7 @@ export class SessionView extends ItemView {
   private restEndsAt: number | null = null;
   private restIntervalId: number | null = null;
   private restEl: HTMLElement | null = null;
-  private restTextEl: HTMLElement | null = null;
+  private restTimeEl: HTMLElement | null = null;
 
   constructor(leaf: WorkspaceLeaf, plugin: GymPlugin) {
     super(leaf);
@@ -55,12 +56,12 @@ export class SessionView extends ItemView {
   }
 
   private startRest(): void {
-    if (!this.plugin.settings.restTimerEnabled) return;
+    primeRestAlert();
     this.restEndsAt = Date.now() + this.plugin.settings.restSeconds * 1000;
     if (this.restIntervalId === null) {
       this.restIntervalId = this.registerInterval(window.setInterval(() => this.tickRest(), 250));
     }
-    this.updateRest();
+    this.renderRestBar();
   }
 
   private adjustRest(seconds: number): void {
@@ -75,36 +76,59 @@ export class SessionView extends ItemView {
       window.clearInterval(this.restIntervalId);
       this.restIntervalId = null;
     }
-    this.updateRest();
+    this.renderRestBar();
   }
 
   private tickRest(): void {
     if (this.restEndsAt !== null && Date.now() >= this.restEndsAt) {
       this.stopRest();
-      new Notice('Time for your next set');
-      navigator.vibrate?.(300);
+      restOverAlert('Time for your next set');
       return;
     }
-    this.updateRest();
+    this.updateRestTime();
   }
 
-  private updateRest(): void {
-    if (!this.restEl || !this.restTextEl) return;
-    this.restEl.toggleClass('is-hidden', this.restEndsAt === null);
-    if (this.restEndsAt === null) return;
+  /** Countdown text only, so the bar's buttons aren't replaced while being tapped. */
+  private updateRestTime(): void {
+    if (!this.restTimeEl || this.restEndsAt === null) return;
     const left = Math.max(0, Math.ceil((this.restEndsAt - Date.now()) / 1000));
-    this.restTextEl.setText(`Rest ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`);
+    this.restTimeEl.setText(`Rest ${formatSeconds(left)}`);
   }
 
-  private renderRest(el: HTMLElement): void {
-    this.restEl = el.createDiv('gym-rest-timer');
-    this.restTextEl = this.restEl.createSpan('gym-rest-time');
-    const btns = this.restEl.createDiv('gym-card-btns');
+  /**
+   * The rest bar stays at the top of the workout. Idle, it's one button that starts a
+   * rest of the configured length; running, it shows the countdown with -15s/+15s/Skip.
+   * Rebuilt only when it switches between the two.
+   */
+  private renderRestBar(): void {
+    const bar = this.restEl;
+    if (!bar) return;
+    bar.empty();
+    this.restTimeEl = null;
+    const running = this.restEndsAt !== null;
+    bar.toggleClass('is-running', running);
+
+    if (this.restEndsAt === null) {
+      const start = bar.createEl('button', { cls: 'gym-rest-start', attr: { 'aria-label': 'Start the timer between sets' } });
+      setIcon(start.createSpan(), 'timer');
+      start.createSpan().setText(`Rest ${formatSeconds(this.plugin.settings.restSeconds)}`);
+      start.addEventListener('click', () => this.startRest());
+      return;
+    }
+
+    this.restTimeEl = bar.createSpan('gym-rest-time');
+    this.updateRestTime();
+    const btns = bar.createDiv('gym-card-btns');
     this.iconButton(btns, 'minus', '15 seconds less', false, () => this.adjustRest(-15));
     this.iconButton(btns, 'plus', '15 seconds more', false, () => this.adjustRest(15));
     const skip = btns.createEl('button', { text: 'Skip' });
     skip.addEventListener('click', () => this.stopRest());
-    this.updateRest();
+  }
+
+  private renderRest(el: HTMLElement): void {
+    if (!this.plugin.settings.restTimerEnabled) return;
+    this.restEl = el.createDiv('gym-rest-timer');
+    this.renderRestBar();
   }
 
   private persist(): void {
@@ -125,7 +149,7 @@ export class SessionView extends ItemView {
     el.empty();
     el.addClass('gym-session-view');
     this.restEl = null;
-    this.restTextEl = null;
+    this.restTimeEl = null;
 
     if (!this.session) {
       this.renderHome(el);
@@ -299,23 +323,13 @@ export class SessionView extends ItemView {
   private renderSets(card: HTMLElement, ex: SessionExercise): void {
     const table = card.createDiv('gym-sets');
     const header = table.createDiv('gym-set-row gym-set-header');
-    ['Set', `Weight (${this.plugin.settings.weightUnit})`, 'Reps', 'Done', ''].forEach(h => header.createSpan({ text: h }));
+    ['Set', `Weight (${this.plugin.settings.weightUnit})`, 'Reps', ''].forEach(h => header.createSpan({ text: h }));
 
     ex.sets.forEach((set, i) => {
-      const row = table.createDiv({ cls: `gym-set-row${set.done ? ' is-done' : ''}` });
+      const row = table.createDiv('gym-set-row');
       row.createSpan({ text: String(i + 1), cls: 'gym-set-index' });
       this.numberInput(row, set.weight, '0.5', v => { set.weight = v; });
       this.numberInput(row, set.reps, '1', v => { set.reps = Math.round(v); });
-
-      const done = row.createEl('input', { type: 'checkbox' });
-      done.checked = set.done;
-      done.addEventListener('change', () => {
-        set.done = done.checked;
-        row.toggleClass('is-done', set.done);
-        this.persist();
-        if (set.done) this.startRest();
-      });
-
       this.iconButton(row, 'x', 'Remove set', false, () => {
         ex.sets.splice(i, 1);
         this.changed();
@@ -325,7 +339,7 @@ export class SessionView extends ItemView {
     const addSet = card.createEl('button', { text: 'Add set', cls: 'gym-link-btn' });
     addSet.addEventListener('click', () => {
       const prev = ex.sets[ex.sets.length - 1];
-      ex.sets.push({ weight: prev?.weight ?? 0, reps: prev?.reps ?? NEW_EXERCISE_DEFAULT.reps, done: false });
+      ex.sets.push({ weight: prev?.weight ?? 0, reps: prev?.reps ?? NEW_EXERCISE_DEFAULT.reps });
       this.changed();
     });
   }
@@ -372,14 +386,10 @@ export class SessionView extends ItemView {
   }
 
   private async finish(session: Session): Promise<void> {
-    const sets = session.exercises.flatMap(ex => ex.sets);
-    if (!sets.some(s => s.done)) {
-      new Notice('Tick off at least one set before finishing');
+    // Every set row is saved, as entered
+    if (!session.exercises.some(ex => ex.sets.length > 0)) {
+      new Notice('Add at least one set before finishing');
       return;
-    }
-    if (sets.some(s => !s.done)) {
-      const ok = await confirmAction(this.app, 'Some sets aren\'t ticked off and won\'t be saved. Finish anyway?', 'Finish');
-      if (!ok) return;
     }
 
     try {
@@ -398,4 +408,9 @@ export class SessionView extends ItemView {
     await this.plugin.store.clearActiveSession();
     this.setSession(null);
   }
+}
+
+/** 90 → "1:30" */
+function formatSeconds(total: number): string {
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
 }

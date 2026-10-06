@@ -79,7 +79,7 @@ export class GymSettingsTab extends PluginSettingTab {
 
     new Setting(containerEl)
     .setName('Timer between sets')
-    .setDesc('Start a countdown when you tick off a set')
+    .setDesc('Show a rest button at the top of the workout; it beeps when the time is up')
     .addToggle(t => t
                .setValue(settings.restTimerEnabled)
                .onChange(async v => {

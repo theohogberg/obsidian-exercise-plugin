@@ -12,7 +12,7 @@ async function storeWithDefaults() {
 }
 
 describe('session note', () => {
-  it('has the documented format: front matter, ticked-off sets only, notes', async () => {
+  it('has the documented format: front matter, every set row, notes', async () => {
     const { store } = await storeWithDefaults();
     const programme = { id: 'p', name: 'Push day', exercises: [
       { exerciseId: 'default-bench-press', sets: 2, reps: 8 },
@@ -21,10 +21,10 @@ describe('session note', () => {
     ] };
     const session = createSession(store, programme, 'exercise');
     session.startedAt = '2026-10-04T09:30:00+02:00';
-    session.exercises[0]!.sets = [{ weight: 85, reps: 6, done: true }, { weight: 82.5, reps: 7, done: true }];
+    session.exercises[0]!.sets = [{ weight: 85, reps: 6 }, { weight: 82.5, reps: 7 }];
     session.exercises[0]!.notes = 'Felt heavy\nSleep was bad';
-    session.exercises[1]!.sets = [{ weight: 30, reps: 12, done: true }];
-    session.exercises[2]!.sets = [{ weight: 10, reps: 15, done: false }];
+    session.exercises[1]!.sets = [{ weight: 30, reps: 12 }];
+    session.exercises[2]!.sets = []; // no rows: left out of the note
     session.notes = 'Good session';
 
     expect(buildSessionNote(store, testSettings(), session)).toBe([
@@ -53,31 +53,27 @@ describe('session note', () => {
     ].join('\n'));
   });
 
-  it('uses the weight unit setting and "Workout" for empty sessions', async () => {
+  it('empty sessions are titled "Workout"; weights use the unit setting; dates are local, not UTC', async () => {
     const { store } = await storeWithDefaults();
     const session = createSession(store, null, 'exercise');
-    session.startedAt = '2026-10-04T09:30:00+02:00';
-    session.exercises.push({ exerciseId: 'default-plank', name: 'Plank', sets: [{ weight: 0, reps: 60, done: true }], notes: '' });
+    // 23:30 local on the 4th, whatever the machine's time zone
+    session.startedAt = new Date(2026, 9, 4, 23, 30).toISOString();
+    session.exercises.push({ exerciseId: 'default-plank', name: 'Plank', sets: [{ weight: 0, reps: 60 }], notes: '' });
     const note = buildSessionNote(store, testSettings({ weightUnit: 'lbs' }), session);
+    expect(note).toContain('date: 2026-10-04');
     expect(note).toContain('# Workout — 2026-10-04');
     expect(note).not.toContain('programme:');
     expect(note).toContain('- 0lbs × 60');
   });
 
-  it('dates the note in local time, not UTC', async () => {
-    const { store } = await storeWithDefaults();
-    const session = createSession(store, null, 'exercise');
-    // 23:30 local on the 4th, whatever the machine's time zone
-    session.startedAt = new Date(2026, 9, 4, 23, 30).toISOString();
-    expect(buildSessionNote(store, testSettings(), session)).toContain('date: 2026-10-04');
-  });
-
-  it('strips characters Obsidian forbids in file names', async () => {
+  it('file names: unsafe characters stripped, a number added when the name is taken', async () => {
     const { app, store } = await storeWithDefaults();
-    const session = createSession(store, { id: 'p', name: 'Legs: A/B #1', exercises: [] }, 'exercise');
-    session.startedAt = '2026-10-04T09:30:00+02:00';
-    const file = await writeSessionNote(app, store, testSettings(), session);
-    expect(file.path).toBe('Gym/Sessions/2026-10-04 Legs AB 1.md');
-    expect(buildSessionNote(store, testSettings(), session)).toContain('programme: "Legs: A/B #1"');
+    const write = async () => {
+      const session = createSession(store, { id: 'p', name: 'Legs: A/B #1', exercises: [] }, 'exercise');
+      session.startedAt = '2026-10-04T09:30:00+02:00';
+      return (await writeSessionNote(app, store, testSettings(), session)).path;
+    };
+    expect(await write()).toBe('Gym/Sessions/2026-10-04 Legs AB 1.md');
+    expect(await write()).toBe('Gym/Sessions/2026-10-04 Legs AB 1 1.md');
   });
 });

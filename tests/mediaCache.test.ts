@@ -43,43 +43,30 @@ describe('MediaCache', () => {
     expect(await resolveMediaSrc(app, store.media, urls[0]!)).toBe(`app://local/${store.media.pathFor(urls[0]!)}`);
   });
 
-  it('counts offline and HTTP errors as failures without stopping the rest', async () => {
+  it('counts offline and HTTP errors as failures without stopping the rest; concurrent downloads share a request', async () => {
     const cache = new MediaCache(fakeApp().app);
     expect(await cache.downloadAll(['https://x.com/offline.jpg', 'https://x.com/missing.jpg', 'https://x.com/ok.jpg']))
       .toEqual({ downloaded: 1, failed: 2 });
-  });
-
-  it('shares one request between concurrent downloads of the same URL', async () => {
-    const cache = new MediaCache(fakeApp().app);
+    requests.length = 0;
     await Promise.all([cache.download('https://x.com/a.jpg'), cache.download('https://x.com/a.jpg')]);
     expect(requests).toEqual(['https://x.com/a.jpg']);
   });
 });
 
-describe('resolving media', () => {
-  it('shows an uncached web image from the web and saves a copy in the background', async () => {
-    const { app, files } = fakeApp();
-    const cache = new MediaCache(app);
-    const url = 'https://x.com/new.gif';
-    expect(await resolveMediaSrc(app, cache, url)).toBe(url);
-    await flush();
-    expect(files.has(cache.pathFor(url)!)).toBe(true);
-    expect(await resolveMediaSrc(app, cache, url)).toBe(`app://local/${cache.pathFor(url)}`);
-  });
+it('resolving media: uncached web images load from the web and are saved in the background; vault paths and [[links]]; editor lines', async () => {
+  const { app, files } = fakeApp({ 'Media/squat.gif': 'gif' });
+  const cache = new MediaCache(app);
+  const url = 'https://x.com/new.gif';
+  expect(await resolveMediaSrc(app, cache, url)).toBe(url);
+  await flush();
+  expect(files.has(cache.pathFor(url)!)).toBe(true);
+  expect(await resolveMediaSrc(app, cache, url)).toBe(`app://local/${cache.pathFor(url)}`);
 
-  it('resolves vault paths and [[links]], and returns null for missing files', async () => {
-    const { app } = fakeApp({ 'Media/squat.gif': 'gif' });
-    const cache = new MediaCache(app);
-    expect(await resolveMediaSrc(app, cache, 'Media/squat.gif')).toBe('app://vault/Media/squat.gif');
-    expect(await resolveMediaSrc(app, cache, '[[squat.gif]]')).toBe('app://vault/Media/squat.gif');
-    expect(await resolveMediaSrc(app, cache, '![[squat.gif|200]]')).toBe('app://vault/Media/squat.gif');
-    expect(await resolveMediaSrc(app, cache, 'nope.gif')).toBeNull();
-  });
+  expect(await resolveMediaSrc(app, cache, 'Media/squat.gif')).toBe('app://vault/Media/squat.gif');
+  expect(await resolveMediaSrc(app, cache, '![[squat.gif|200]]')).toBe('app://vault/Media/squat.gif');
+  expect(await resolveMediaSrc(app, cache, 'nope.gif')).toBeNull();
 
-  it('parses the editor field into image entries, one per non-empty line', () => {
-    expect(parseMediaLines(' https://x/a.gif \n\n[[squat.gif]]\n')).toEqual([
-      { type: 'image', src: 'https://x/a.gif' },
-      { type: 'image', src: '[[squat.gif]]' },
-    ]);
-  });
+  expect(parseMediaLines(' https://x/a.gif \n\n[[squat.gif]]\n')).toEqual([
+    { type: 'image', src: 'https://x/a.gif' }, { type: 'image', src: '[[squat.gif]]' },
+  ]);
 });
