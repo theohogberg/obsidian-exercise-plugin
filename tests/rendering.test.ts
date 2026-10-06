@@ -56,10 +56,10 @@ beforeEach(() => {
 });
 afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
 
-it('home: three buttons; Start session lists programmes; Back; Start empty session', async () => {
+it('home: Start session lists programmes; Back; Start empty session; Edit programme opens the editor', async () => {
   const { view, el, startSession } = await setup();
   await view.onOpen();
-  expect(texts(el.querySelectorAll('.gym-menu-title'))).toEqual(['Start session', 'Start empty session', 'Design programme']);
+  expect(texts(el.querySelectorAll('.gym-menu-title'))).toEqual(['Start session', 'Start empty session', 'Design programme', 'Edit programme']);
   expect(el.querySelector('.gym-menu-btn')!.classList.contains('mod-cta')).toBe(true);
 
   button(el, 'Start session').click();
@@ -71,14 +71,17 @@ it('home: three buttons; Start session lists programmes; Back; Start empty sessi
   button(el, 'Back').click();
   button(el, 'Start empty session').click();
   expect(startSession).toHaveBeenLastCalledWith(null);
+
+  button(el, 'Edit programme').click();
+  button(el.querySelector('.gym-programme-card')!, 'Edit').click();
+  expect(openModals.at(-1)).toBeInstanceOf(ProgrammeEditorModal);
 });
 
-it('session: cards prefilled from last time; set rows line up with their header; info button', async () => {
+it('session: cards prefilled from last time, Add set then the titled notes box; set rows line up with their header; info button', async () => {
   const { el } = await inSession();
   const cards = el.querySelectorAll('.gym-card');
   expect(texts(el.querySelectorAll('.gym-card .gym-exercise-name'))).toEqual(['Bench Press', 'Tricep Pushdown']);
-  expect(cards[0]!.querySelector('.gym-last')!.textContent).toContain('80×8, 77.5×7');
-  expect(cards[1]!.querySelector('.gym-last')!.textContent).toBe('No history yet');
+  expect([...cards[0]!.children].map(c => c.className.split(' ')[0]).slice(-4)).toEqual(['gym-sets', 'gym-add-set', 'gym-notes-label', 'gym-notes']);
   expect([...cards[0]!.querySelectorAll<HTMLInputElement>('input[type="number"]')].map(i => i.value)).toEqual(['80', '8', '77.5', '7']);
 
   // The table is one grid with rows as display: contents, so every row needs the
@@ -109,7 +112,7 @@ it('session: edits and Add set are saved as you go', async () => {
 it('session: Finish workout writes and opens the note, then returns to the home menu', async () => {
   const { el, files, leaf } = await inSession();
   button(el, 'Finish workout').click();
-  await vi.waitFor(() => expect(el.querySelectorAll('.gym-menu-btn')).toHaveLength(3));
+  await vi.waitFor(() => expect(el.querySelectorAll('.gym-menu-btn')).toHaveLength(4));
   const note = [...files.keys()].find(p => p.startsWith('Gym/Sessions/'))!;
   expect(leaf.openFile).toHaveBeenCalledWith({ path: note });
 });

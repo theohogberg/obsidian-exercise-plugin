@@ -3,21 +3,19 @@ import type GymPlugin from './main';
 import { ExercisePickerModal, confirmAction } from './pickers';
 import { ExerciseInfoModal } from './exerciseInfoModal';
 import { ProgrammeEditorModal } from './programmeModal';
-import { buildSessionExercise, finishSession, summariseSets } from './session';
+import { buildSessionExercise, finishSession } from './session';
 import { primeRestAlert, restOverAlert } from './restAlert';
 import { Session, SessionExercise } from './types';
 
 export const VIEW_TYPE_SESSION = 'gym-session';
 
-const HISTORY_SHOWN = 5;
 const NEW_EXERCISE_DEFAULT = { sets: 3, reps: 8 };
 
 export class SessionView extends ItemView {
   private plugin: GymPlugin;
   private session: Session | null = null;
-  private expandedHistory = new Set<string>();
-  // Home screen (no session running): the three-button menu, or the programme list
-  private homeMode: 'menu' | 'choose' = 'menu';
+  // Home screen (no session running): the menu, or the programme list to start or edit one
+  private homeMode: 'menu' | 'start' | 'edit' = 'menu';
   // Rest timer: lives on the view, so it survives re-renders
   private restEndsAt: number | null = null;
   private restIntervalId: number | null = null;
@@ -50,7 +48,6 @@ export class SessionView extends ItemView {
   setSession(session: Session | null): void {
     this.session = session;
     this.homeMode = 'menu';
-    this.expandedHistory.clear();
     this.stopRest();
     this.render();
   }
@@ -187,14 +184,14 @@ export class SessionView extends ItemView {
   /** No session running: start one, or design a programme. */
   private renderHome(el: HTMLElement): void {
     el.createEl('h2', { text: 'Workouts' });
-    if (this.homeMode === 'choose') {
-      this.renderProgrammeChoice(el);
+    if (this.homeMode !== 'menu') {
+      this.renderProgrammeChoice(el, this.homeMode);
       return;
     }
 
     const menu = el.createDiv('gym-home-menu');
     this.menuButton(menu, 'play', 'Start session', 'Pick a programme. Weights and reps from last time are filled in.', true, () => {
-      this.homeMode = 'choose';
+      this.homeMode = 'start';
       this.render();
     });
     this.menuButton(menu, 'plus', 'Start empty session', 'Add exercises as you go.', false, () => {
@@ -202,6 +199,10 @@ export class SessionView extends ItemView {
     });
     this.menuButton(menu, 'list-ordered', 'Design programme', 'Create a template for a session: exercises in order, with sets and reps.', false, () => {
       new ProgrammeEditorModal(this.app, this.plugin.store, null, () => this.render()).open();
+    });
+    this.menuButton(menu, 'pencil', 'Edit programme', 'Change a programme\'s exercises, order, sets and reps.', false, () => {
+      this.homeMode = 'edit';
+      this.render();
     });
   }
 
@@ -215,14 +216,14 @@ export class SessionView extends ItemView {
     btn.addEventListener('click', onClick);
   }
 
-  private renderProgrammeChoice(el: HTMLElement): void {
+  private renderProgrammeChoice(el: HTMLElement, mode: 'start' | 'edit'): void {
     const store = this.plugin.store;
     const back = el.createEl('button', { text: 'Back', cls: 'gym-link-btn gym-back-btn' });
     back.addEventListener('click', () => {
       this.homeMode = 'menu';
       this.render();
     });
-    el.createEl('h3', { text: 'Choose a programme' });
+    el.createEl('h3', { text: mode === 'start' ? 'Choose a programme' : 'Choose a programme to edit' });
 
     const programmes = store.getProgrammes();
     if (programmes.length === 0) {
@@ -246,14 +247,16 @@ export class SessionView extends ItemView {
       info.createSpan({ text: last ? `Last done ${moment(last).format('ddd D MMM')}` : 'Not done yet', cls: 'gym-exercise-meta' });
 
       const btns = card.createDiv('gym-card-btns');
-      this.iconButton(btns, 'pencil', 'Edit programme', false, () => {
-        new ProgrammeEditorModal(this.app, store, p, () => this.render()).open();
-      });
+      const edit = () => new ProgrammeEditorModal(this.app, store, p, () => this.render()).open();
+      if (mode === 'edit') {
+        btns.createEl('button', { text: 'Edit', cls: 'mod-cta' }).addEventListener('click', edit);
+        return;
+      }
+      this.iconButton(btns, 'pencil', 'Edit programme', false, edit);
       const start = btns.createEl('button', { text: 'Start', cls: 'mod-cta' });
       start.addEventListener('click', () => { void this.plugin.startSession(p); });
     });
   }
-
 
   private renderExercise(parent: HTMLElement, session: Session, ex: SessionExercise, idx: number): void {
     const exercise = this.plugin.store.getExercise(ex.exerciseId);
@@ -274,50 +277,18 @@ export class SessionView extends ItemView {
     });
 
     if (exercise?.notes) card.createDiv({ text: exercise.notes, cls: 'gym-cues' });
-    this.renderHistory(card, session, ex);
     this.renderSets(card, ex);
+    const addSet = card.createEl('button', { text: 'Add set', cls: 'gym-add-set' });
+    addSet.addEventListener('click', () => {
+      const prev = ex.sets[ex.sets.length - 1];
+      ex.sets.push({ weight: prev?.weight ?? 0, reps: prev?.reps ?? NEW_EXERCISE_DEFAULT.reps });
+      this.changed();
+    });
 
+    card.createDiv({ text: 'Notes', cls: 'gym-notes-label' });
     const notes = card.createEl('textarea', { cls: 'gym-notes', attr: { placeholder: 'Notes for this exercise', rows: '1' } });
     notes.value = ex.notes;
     notes.addEventListener('change', () => { ex.notes = notes.value; this.persist(); });
-  }
-
-  private renderHistory(card: HTMLElement, session: Session, ex: SessionExercise): void {
-    const store = this.plugin.store;
-    const history = store.getHistory(ex.exerciseId);
-    const last = store.getLastLog(ex.exerciseId, session.programmeId, this.plugin.settings.prefillFrom);
-    if (!last) {
-      card.createDiv({ text: 'No history yet', cls: 'gym-last' });
-      return;
-    }
-
-    const lastEl = card.createDiv('gym-last');
-    lastEl.createSpan({ text: `Last time (${moment(last.date).format('D MMM')}): ${summariseSets(last.sets)}` });
-    if (last.notes) lastEl.createDiv({ text: `“${last.notes}”`, cls: 'gym-last-notes' });
-
-    if (history.length < 2) return;
-    const expanded = this.expandedHistory.has(ex.exerciseId);
-    const toggle = lastEl.createEl('button', { text: expanded ? 'Hide history' : 'Show history', cls: 'gym-link-btn' });
-    toggle.addEventListener('click', () => {
-      if (expanded) this.expandedHistory.delete(ex.exerciseId);
-      else this.expandedHistory.add(ex.exerciseId);
-      this.render();
-    });
-    if (!expanded) return;
-
-    const list = card.createEl('ul', 'gym-history');
-    history.slice(0, HISTORY_SHOWN).forEach(log => {
-      const item = list.createEl('li');
-      const date = moment(log.date).format('D MMM YYYY');
-      if (log.notePath) {
-        const link = item.createEl('a', { text: date, cls: 'internal-link' });
-        link.addEventListener('click', () => { void this.app.workspace.openLinkText(log.notePath, '', 'tab'); });
-      } else {
-        item.createSpan({ text: date });
-      }
-      item.appendText(`: ${summariseSets(log.sets)}`);
-      if (log.notes) item.createSpan({ text: ` — ${log.notes}`, cls: 'gym-exercise-meta' });
-    });
   }
 
   private renderSets(card: HTMLElement, ex: SessionExercise): void {
@@ -334,13 +305,6 @@ export class SessionView extends ItemView {
         ex.sets.splice(i, 1);
         this.changed();
       });
-    });
-
-    const addSet = card.createEl('button', { text: 'Add set', cls: 'gym-link-btn' });
-    addSet.addEventListener('click', () => {
-      const prev = ex.sets[ex.sets.length - 1];
-      ex.sets.push({ weight: prev?.weight ?? 0, reps: prev?.reps ?? NEW_EXERCISE_DEFAULT.reps });
-      this.changed();
     });
   }
 

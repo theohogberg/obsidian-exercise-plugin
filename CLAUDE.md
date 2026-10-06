@@ -52,7 +52,7 @@ src/
   store.ts           # GymStore: .gym/data.json (exercises, programmes, history), legacy migration, active-session file
   session.ts         # createSession / buildSessionExercise (prefill rule), finishSession, programme-values helpers
   sessionNote.ts     # Session → markdown, note file naming
-  sessionView.ts     # SessionView, the "Workouts" tab: home when idle (three buttons: Start session → programme list, Start empty session, Design programme; `homeMode`); set logging, history, notes, rest bar, finish/discard during a workout
+  sessionView.ts     # SessionView, the "Workouts" tab: home when idle (Start session → programme list, Start empty session, Design programme, Edit programme → programme list; `homeMode`); set logging, notes, rest bar, finish/discard during a workout
   restAlert.ts       # what happens when a rest ends: notice, beep, vibration, desktop notification
   defaultExercises.ts # GENERATED from assets/exercises by scripts/build-exercises.mjs
   exerciseMedia.ts   # resolve and render exercise media (images now, 3D later)

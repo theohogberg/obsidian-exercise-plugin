@@ -128,27 +128,6 @@ button.gym-link-btn:hover {
   white-space: pre-wrap;
 }
 
-.gym-last {
-  font-size: 0.85em;
-  margin: 6px 0;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  column-gap: 8px;
-}
-
-.gym-last-notes {
-  width: 100%;
-  color: var(--text-muted);
-  font-style: italic;
-}
-
-.gym-history {
-  font-size: 0.85em;
-  margin: 0 0 8px;
-  padding-left: 18px;
-}
-
 .gym-sets {
   display: grid;
   grid-template-columns: 2.5em minmax(0, 1fr) minmax(0, 1fr) 2.5em;
@@ -170,6 +149,18 @@ button.gym-link-btn:hover {
 .gym-set-index {
   text-align: center;
   color: var(--text-muted);
+}
+
+button.gym-add-set {
+  margin-top: 4px;
+}
+
+.gym-notes-label {
+  margin-top: 10px;
+  font-size: 0.72em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .gym-notes {

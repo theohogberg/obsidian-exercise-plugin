@@ -7,11 +7,6 @@ import { writeSessionNote } from './sessionNote';
 const FALLBACK_SETS = 3;
 const FALLBACK_REPS = 8;
 
-/** "80×8, 80×8, 77.5×7" */
-export function summariseSets(sets: LoggedSet[]): string {
-  return sets.map(s => `${s.weight}×${s.reps}`).join(', ');
-}
-
 /** A programme's Sets/Reps as implied by a performed set list: number of sets, reps of the first set. */
 export function programmeValuesFrom(sets: LoggedSet[]): { sets: number; reps: number } | null {
   const first = sets[0];

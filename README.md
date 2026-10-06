@@ -7,10 +7,11 @@ Inspired by [RepCount](https://apps.apple.com/us/app/repcount-gym-workout-tracke
 ## How it works
 
 1. **Manage programmes and exercises** (command palette): the library starts with 39 common exercises, 5–6 per muscle group, each with photos, cues and instructions. Add your own (name, muscle group, equipment, cues, images), then group exercises into programmes such as "Push day", in the order you train them.
-2. **Workouts** (the dumbbell ribbon icon, or "Open workouts" in the command palette) opens the workout tab with three buttons:
+2. **Workouts** (the dumbbell ribbon icon, or "Open workouts" in the command palette) opens the workout tab with four buttons:
    - **Start session**: choose a programme (with when you last did it) and press Start. Each exercise's sets are prefilled with the weight and reps from last time.
    - **Start empty session**: add exercises as you go.
    - **Design programme**: create a template for a session: exercises in order, with sets and reps.
+   - **Edit programme**: pick a programme and change its exercises, order, sets and reps.
 3. During the workout: edit weight and reps per set, add or remove sets and exercises, and write notes. Tap **Rest** at the top (it stays in view while you scroll) to start the timer between sets; when it's up you get a beep, a banner, a vibration on Android, and a system notification on desktop. Progress is saved continuously, so closing Obsidian doesn't lose the workout.
 
    On a phone the rest alert needs Obsidian open with the screen on: an Obsidian plugin can't send real phone notifications, and the phone pauses Obsidian in the background. The beep is muted when the phone is on silent.
