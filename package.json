@@ -1,6 +1,6 @@
 {
 	"name": "gym-plugin",
-	"version": "0.3.0",
+	"version": "0.4.0",
 	"description": "Build workout programmes, log sets with last time's weights prefilled, and save sessions as notes.",
 	"private": true,
 	"author": "theohog",
